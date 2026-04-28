@@ -31,8 +31,8 @@ public class ClientboundPermissionNotifyPacket {
         ctx.get().enqueueWork(() -> {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.displayClientMessage(
-                        Component.literal(msg.requesterName + " is requesting access to your mirrors. Open a mirror to manage."),
-                        false
+                        Component.literal("\u2654 " + msg.requesterName + " wants mirror access — open your mirror to respond."),
+                        true  // action bar — visible over HUD, not scrolled away in chat
                 );
             }
         });

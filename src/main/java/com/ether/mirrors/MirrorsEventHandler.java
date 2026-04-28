@@ -332,12 +332,24 @@ public class MirrorsEventHandler {
 
     /**
      * End any active mirror calls when a player changes dimension.
+     * Notifies both participants with a clear reason before ending the call.
      */
     @SubscribeEvent
     public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
-            MirrorCallManager.getInstance().endAllCallsForPlayer(serverPlayer.getUUID(), serverPlayer.server);
+        if (!(event.getEntity() instanceof ServerPlayer serverPlayer)) return;
+        UUID playerId = serverPlayer.getUUID();
+        MirrorCallManager.ActiveCall call = MirrorCallManager.getInstance().getCallForPlayer(playerId);
+        if (call != null) {
+            serverPlayer.displayClientMessage(
+                    Component.literal("Your mirror call ended because you changed dimensions."), false);
+            UUID otherId = call.callerUUID.equals(playerId) ? call.calleeUUID : call.callerUUID;
+            ServerPlayer other = serverPlayer.server.getPlayerList().getPlayer(otherId);
+            if (other != null) {
+                other.displayClientMessage(Component.literal(
+                        serverPlayer.getGameProfile().getName() + " changed dimensions — mirror call ended."), false);
+            }
         }
+        MirrorCallManager.getInstance().endAllCallsForPlayer(playerId, serverPlayer.server);
     }
 
     /**

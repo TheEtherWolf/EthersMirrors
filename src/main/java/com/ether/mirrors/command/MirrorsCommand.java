@@ -22,6 +22,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class MirrorsCommand {
 
@@ -118,10 +120,40 @@ public class MirrorsCommand {
 
     private static int listAll(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
+        MirrorNetworkData networkData = MirrorNetworkData.get(source.getServer());
 
-        source.sendSuccess(() -> Component.literal("--- All Registered Mirrors ---"), false);
-        source.sendSuccess(() -> Component.literal("Use /ethersmirrors inspect <player> to see specific player's mirrors."), false);
+        List<MirrorNetworkData.MirrorEntry> allMirrors = networkData.getAllMirrors();
+        if (allMirrors.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No mirrors registered."), false);
+            return 1;
+        }
 
+        // Group by owner
+        Map<UUID, List<MirrorNetworkData.MirrorEntry>> byOwner = new java.util.LinkedHashMap<>();
+        for (MirrorNetworkData.MirrorEntry entry : allMirrors) {
+            byOwner.computeIfAbsent(entry.ownerUUID, k -> new java.util.ArrayList<>()).add(entry);
+        }
+
+        source.sendSuccess(() -> Component.literal("--- All Mirrors (" + allMirrors.size() + " total across " + byOwner.size() + " players) ---"), false);
+        for (Map.Entry<UUID, List<MirrorNetworkData.MirrorEntry>> ownerEntry : byOwner.entrySet()) {
+            UUID ownerUUID = ownerEntry.getKey();
+            ServerPlayer ownerOnline = source.getServer().getPlayerList().getPlayer(ownerUUID);
+            String ownerName = ownerOnline != null
+                    ? ownerOnline.getGameProfile().getName()
+                    : source.getServer().getProfileCache().get(ownerUUID)
+                            .map(com.mojang.authlib.GameProfile::getName)
+                            .orElse(ownerUUID.toString().substring(0, 8) + "…");
+            List<MirrorNetworkData.MirrorEntry> ownerMirrors = ownerEntry.getValue();
+            source.sendSuccess(() -> Component.literal(ownerName + " (" + ownerMirrors.size() + " mirrors):"), false);
+            for (MirrorNetworkData.MirrorEntry entry : ownerMirrors) {
+                String displayName = entry.name != null && !entry.name.isEmpty() ? entry.name : "Unnamed";
+                String info = String.format("  [%s] %s %s @ %d,%d,%d in %s",
+                        displayName, entry.tier.getDisplayName(), entry.type.getDisplayName(),
+                        entry.pos.getX(), entry.pos.getY(), entry.pos.getZ(),
+                        entry.dimension.location().getPath());
+                source.sendSuccess(() -> Component.literal(info), false);
+            }
+        }
         return 1;
     }
 

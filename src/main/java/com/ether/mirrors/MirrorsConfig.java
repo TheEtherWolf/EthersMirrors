@@ -30,6 +30,7 @@ public class MirrorsConfig {
 
     // Calls
     public static final ForgeConfigSpec.IntValue CALL_TIMEOUT_SECONDS;
+    public static final ForgeConfigSpec.IntValue CONNECTED_CALL_MAX_HOURS;
     public static final ForgeConfigSpec.IntValue STATIC_THRESHOLD_PERCENT;
 
     // Upgrades
@@ -81,6 +82,7 @@ public class MirrorsConfig {
 
         BUILDER.comment("Calling Mirror Settings").push("calls");
         CALL_TIMEOUT_SECONDS = BUILDER.comment("Seconds before unanswered call times out").defineInRange("callTimeoutSeconds", 30, 10, 120);
+        CONNECTED_CALL_MAX_HOURS = BUILDER.comment("Maximum duration of an active connected call (hours) before it is automatically ended").defineInRange("connectedCallMaxHours", 1, 1, 24);
         STATIC_THRESHOLD_PERCENT = BUILDER.comment("Percent of max range where static begins").defineInRange("staticThresholdPercent", 80, 50, 99);
         BUILDER.pop();
 

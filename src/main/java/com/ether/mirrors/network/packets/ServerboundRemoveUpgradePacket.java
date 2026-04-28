@@ -57,11 +57,16 @@ public class ServerboundRemoveUpgradePacket {
                 ItemStack returnStack = new ItemStack(upgradeItemOpt.get());
                 if (!player.addItem(returnStack)) {
                     player.drop(returnStack, false);
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                            upgradeType.getDisplayName() + " upgrade removed. Your inventory was full — item dropped at your feet."), true);
+                } else {
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                            upgradeType.getDisplayName() + " upgrade removed."), true);
                 }
+            } else {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        upgradeType.getDisplayName() + " upgrade removed."), true);
             }
-
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    upgradeType.getDisplayName() + " upgrade removed."), true);
         });
         ctx.get().setPacketHandled(true);
     }

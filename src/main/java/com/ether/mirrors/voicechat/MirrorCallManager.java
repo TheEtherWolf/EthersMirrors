@@ -163,12 +163,11 @@ public class MirrorCallManager {
         }
     }
 
-    private static final long CONNECTED_CALL_MAX_MS = 4 * 60 * 60 * 1000L; // 4 hours
-
     /**
      * Check for timed-out ringing calls and cancel them.
      */
     public void tickTimeouts(long timeoutMs, @Nullable net.minecraft.server.MinecraftServer server) {
+        long connectedMaxMs = (long) com.ether.mirrors.MirrorsConfig.CONNECTED_CALL_MAX_HOURS.get() * 60 * 60 * 1000L;
         List<UUID> toCancel = new ArrayList<>();
         long now = System.currentTimeMillis();
         for (ActiveCall call : activeCalls.values()) {
@@ -177,7 +176,7 @@ public class MirrorCallManager {
                     toCancel.add(call.callId);
                 }
             } else if (call.getState() == CallState.CONNECTED) {
-                if (now - call.startTime > CONNECTED_CALL_MAX_MS) {
+                if (now - call.startTime > connectedMaxMs) {
                     toCancel.add(call.callId);
                 }
             }

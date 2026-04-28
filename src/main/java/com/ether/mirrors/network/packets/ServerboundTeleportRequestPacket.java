@@ -44,6 +44,12 @@ public class ServerboundTeleportRequestPacket {
         this(targetMirrorId, sourceMirrorPos, false, false);
     }
 
+    /** Returns a stable, tier-specific cooldown key for handheld mirrors. */
+    private static UUID handheldCooldownKey(MirrorTier tier) {
+        return UUID.nameUUIDFromBytes(
+                ("ethersmirrors.handheld." + tier.getName()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     public static void encode(ServerboundTeleportRequestPacket msg, FriendlyByteBuf buf) {
         buf.writeUUID(msg.targetMirrorId);
         buf.writeBlockPos(msg.sourceMirrorPos);
@@ -98,7 +104,11 @@ public class ServerboundTeleportRequestPacket {
             }
             if (!permData.canPlayerUseMirror(player.getUUID(), target.mirrorId, target.ownerUUID,
                     PermissionData.PermissionLevel.USE, privacyLock)) {
-                player.displayClientMessage(Component.literal("You don't have permission to use this mirror."), true);
+                if (privacyLock && !player.getUUID().equals(target.ownerUUID)) {
+                    player.displayClientMessage(Component.literal("This mirror is privacy-locked. Only the owner can use it."), true);
+                } else {
+                    player.displayClientMessage(Component.literal("You don't have permission to use this mirror."), true);
+                }
                 return;
             }
 
@@ -164,6 +174,7 @@ public class ServerboundTeleportRequestPacket {
             // ONE_WAY upgrade: this mirror only receives teleports, cannot send
             if (sourceBE != null && sourceBE.hasUpgrade(MirrorUpgradeType.ONE_WAY)) {
                 player.playSound(net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BASS.get(), 0.5F, 0.5F);
+                player.displayClientMessage(Component.literal("This mirror only receives teleports — it cannot send."), true);
                 return;
             }
 
@@ -186,6 +197,8 @@ public class ServerboundTeleportRequestPacket {
                 boolean isDay = timeOfDay < 13000L;
                 if ((timeLockMode.equals("day") && !isDay) || (timeLockMode.equals("night") && isDay)) {
                     player.playSound(net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BASS.get(), 0.5F, 0.5F);
+                    String allowed = timeLockMode.equals("day") ? "daytime" : "nighttime";
+                    player.displayClientMessage(Component.literal("This mirror only works during the " + allowed + "."), true);
                     return;
                 }
             }
@@ -199,9 +212,10 @@ public class ServerboundTeleportRequestPacket {
                 cooldownSecs = (int)(cooldownSecs * (1.0 - pct / 100.0));
             }
 
+            // Use per-tier cooldown key for handheld mirrors so each tier has its own independent cooldown
             UUID sourceMirrorId = msg.isHandheld
-                    ? com.ether.mirrors.data.MirrorNetworkData.HANDHELD_MIRROR_ID
-                    : (sourceBE != null ? sourceBE.getMirrorId() : com.ether.mirrors.data.MirrorNetworkData.HANDHELD_MIRROR_ID);
+                    ? handheldCooldownKey(sourceTier)
+                    : (sourceBE != null ? sourceBE.getMirrorId() : handheldCooldownKey(sourceTier));
             long cooldownRemainingMs = networkData.getCooldownRemainingMs(player.getUUID(), sourceMirrorId, cooldownSecs);
             if (cooldownRemainingMs > 0) {
                 double remaining = cooldownRemainingMs / 1000.0;
