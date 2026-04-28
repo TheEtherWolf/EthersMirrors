@@ -28,13 +28,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = EthersMirrors.MOD_ID)
@@ -43,15 +47,31 @@ public class MirrorsEventHandler {
     private static int tickCounter = 0;
     private static int pocketTickCounter = 0;
 
+    /** Death pos + return coords for players who died in the pocket dimension this session.
+     *  Used to relocate corpse entities (any mod) that spawn at the death location. */
+    private record PendingCorpseRelocation(net.minecraft.world.phys.Vec3 deathPos,
+                                           PocketDimensionData.ReturnPoint returnPoint) {}
+    private static final ConcurrentHashMap<UUID, PendingCorpseRelocation> pendingCorpseRelocations =
+            new ConcurrentHashMap<>();
+
     @SubscribeEvent
     public static void onRegisterCommands(net.minecraftforge.event.RegisterCommandsEvent event) {
         MirrorsCommand.register(event.getDispatcher());
     }
 
-    /** Clear stale call state on server start to prevent ghost calls from a previous session/crash. */
+    /** Clear stale call state on server start to prevent ghost calls from a previous session/crash.
+     *  Also eagerly loads the pocket dimension so cross-mod teleports (e.g. Essential) don't
+     *  freeze on a cold-load. */
     @SubscribeEvent
     public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) {
         MirrorCallManager.getInstance().clearAll();
+        // Force the pocket dimension to load now — prevents a freeze when a player is teleported
+        // into it via a third-party mod (Essential, etc.) before any mirror has been used.
+        net.minecraft.server.MinecraftServer server = event.getServer();
+        ServerLevel pocketLevel = server.getLevel(PocketMirrorBlock.POCKET_DIMENSION);
+        if (pocketLevel == null) {
+            EthersMirrors.LOGGER.warn("[EthersMirrors] Pocket dimension failed to load on server start.");
+        }
     }
 
     /**
@@ -263,20 +283,43 @@ public class MirrorsEventHandler {
         if (!serverPlayer.level().dimension().equals(PocketMirrorBlock.POCKET_DIMENSION)) return;
 
         PocketDimensionData pocketData = PocketDimensionData.get(serverPlayer.server);
-        java.util.UUID pocketOwner = pocketData.getPocketOwnerForPlayer(serverPlayer.getUUID());
+        UUID pocketOwner = pocketData.getPocketOwnerForPlayer(serverPlayer.getUUID());
         if (pocketOwner == null) return;
 
         MirrorNetworkData networkData = MirrorNetworkData.get(serverPlayer.server);
         boolean isOwnPocket = pocketOwner.equals(serverPlayer.getUUID());
-
-        String ownerName = pocketOwner.equals(serverPlayer.getUUID()) ? "your"
+        String ownerName = isOwnPocket ? "your"
                 : resolvePlayerName(serverPlayer.server, pocketOwner) + "'s";
 
-        String msg = "[Ether's Mirrors] You died inside " + ownerName + " pocket dimension. "
+        // Notify the dying player
+        String dyingMsg = "[Ether's Mirrors] You died inside " + ownerName + " pocket dimension. "
                 + (isOwnPocket
                 ? "Re-enter your pocket mirror to retrieve your items."
                 : "Ask the pocket owner to let you back in, or your items may be lost.");
-        networkData.addPendingAlarm(serverPlayer.getUUID(), msg);
+        networkData.addPendingAlarm(serverPlayer.getUUID(), dyingMsg);
+
+        // Notify the pocket owner if it's someone else's pocket — they need to know a
+        // visitor's corpse/items are sitting in their dimension.
+        if (!isOwnPocket) {
+            String deadName = serverPlayer.getGameProfile().getName();
+            String ownerMsg = "[Ether's Mirrors] " + deadName + " died inside your pocket dimension."
+                    + " Their items are there — invite them back to let them retrieve them.";
+            ServerPlayer ownerOnline = serverPlayer.server.getPlayerList().getPlayer(pocketOwner);
+            if (ownerOnline != null) {
+                ownerOnline.sendSystemMessage(Component.literal(ownerMsg)
+                        .withStyle(net.minecraft.ChatFormatting.YELLOW));
+            } else {
+                networkData.addPendingAlarm(pocketOwner, ownerMsg);
+            }
+        }
+
+        // Store the death position + return coords so EntityJoinLevelEvent can relocate
+        // any corpse entity that spawns here (works with any corpse mod).
+        PocketDimensionData.ReturnPoint returnPoint = pocketData.getPlayerReturn(serverPlayer.getUUID());
+        if (returnPoint != null) {
+            pendingCorpseRelocations.put(serverPlayer.getUUID(),
+                    new PendingCorpseRelocation(serverPlayer.position(), returnPoint));
+        }
     }
 
     private static String resolvePlayerName(net.minecraft.server.MinecraftServer server, java.util.UUID uuid) {
@@ -331,6 +374,72 @@ public class MirrorsEventHandler {
                         serverPlayer.getYRot(), serverPlayer.getXRot());
             }
         }
+    }
+
+    /**
+     * Relocates any corpse-like entity (any mod) that spawns in the pocket dimension at a
+     * player's death position to their overworld return position instead.
+     *
+     * Tags the entry as handled so at most one entity per death is relocated.
+     * Non-living entities that spawn naturally in the pocket (none, normally) are ignored
+     * because no pending relocation will match their position.
+     */
+    @SubscribeEvent
+    public static void onEntityJoinPocket(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide()) return;
+        if (!event.getLevel().dimension().equals(PocketMirrorBlock.POCKET_DIMENSION)) return;
+        // Only care about non-living entities (corpse blocks/entities are not LivingEntity)
+        if (event.getEntity() instanceof net.minecraft.world.entity.LivingEntity) return;
+        if (event.getEntity() instanceof Player) return;
+
+        net.minecraft.world.phys.Vec3 entityPos = event.getEntity().position();
+
+        for (var entry : pendingCorpseRelocations.entrySet()) {
+            PendingCorpseRelocation pending = entry.getValue();
+            if (entityPos.distanceTo(pending.deathPos()) > 8.0) continue;
+
+            // Match: cancel the spawn in pocket, re-add in the return dimension
+            event.setCanceled(true);
+            pendingCorpseRelocations.remove(entry.getKey());
+
+            net.minecraft.world.entity.Entity corpse = event.getEntity();
+            PocketDimensionData.ReturnPoint ret = pending.returnPoint();
+            ServerLevel returnLevel = ((ServerLevel) event.getLevel()).getServer().getLevel(ret.dimension);
+            if (returnLevel == null) returnLevel = ((ServerLevel) event.getLevel()).getServer().overworld();
+
+            corpse.setPos(ret.x, ret.y, ret.z);
+            returnLevel.addFreshEntity(corpse);
+            EthersMirrors.LOGGER.info("[EthersMirrors] Relocated pocket corpse to {}", ret.dimension.location());
+            break;
+        }
+    }
+
+    /**
+     * Defense-in-depth against CarryOn picking up mirror blocks.
+     * CarryOn 2.1.2.7 has a known bug where block tags are not honored (GitHub #739).
+     * This handler fires at HIGH priority (before CarryOn's NORMAL) and for the specific
+     * sneak+empty-hand gesture that CarryOn uses, manually triggers Block.use() so our
+     * management UI still opens, then consumes the event so CarryOn never sees it.
+     *
+     * On the server side we just cancel — the client sends the management packet itself.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onPreventCarryOnMirrorPickup(PlayerInteractEvent.RightClickBlock event) {
+        if (!ModList.get().isLoaded("carryon")) return;
+        Level level = event.getLevel();
+        BlockState state = level.getBlockState(event.getPos());
+        if (!(state.getBlock() instanceof MirrorBlock)) return;
+        // CarryOn only activates on sneak + empty main hand
+        if (!event.getEntity().isCrouching()) return;
+        if (!event.getEntity().getMainHandItem().isEmpty()) return;
+
+        if (level.isClientSide()) {
+            // Fire Block.use() ourselves so the management screen packet gets sent,
+            // then consume the event before CarryOn can pick the mirror up.
+            state.use(level, event.getEntity(), event.getHand(), event.getHitVec());
+        }
+        event.setCanceled(true);
+        event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
     }
 
     /**
