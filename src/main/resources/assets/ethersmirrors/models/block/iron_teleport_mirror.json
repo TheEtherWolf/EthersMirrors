@@ -1,0 +1,7 @@
+{
+  "parent": "ethersmirrors:block/mirror_base",
+  "textures": {
+    "front": "ethersmirrors:block/iron_teleport_mirror",
+    "particle": "ethersmirrors:block/iron_teleport_mirror"
+  }
+}

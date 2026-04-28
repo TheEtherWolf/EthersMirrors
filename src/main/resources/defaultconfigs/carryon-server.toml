@@ -1,0 +1,32 @@
+# Carry On blacklist — prevents the Carry On mod from picking up Ether's Mirrors block entities.
+# Without this, players can carry mirror blocks, bypassing ownership/permission checks and
+# potentially duplicating or displacing pocket dimension anchor blocks.
+[blacklist]
+    entities = []
+    tiles = [
+        # Pocket mirror (tier-independent)
+        "ethersmirrors:pocket_mirror",
+        # Exit mirror (placed inside pocket dimensions — must never be moved)
+        "ethersmirrors:exit_mirror",
+        # Teleport mirrors
+        "ethersmirrors:wood_teleport_mirror",
+        "ethersmirrors:stone_teleport_mirror",
+        "ethersmirrors:iron_teleport_mirror",
+        "ethersmirrors:gold_teleport_mirror",
+        "ethersmirrors:diamond_teleport_mirror",
+        "ethersmirrors:netherite_teleport_mirror",
+        # Calling mirrors
+        "ethersmirrors:wood_calling_mirror",
+        "ethersmirrors:stone_calling_mirror",
+        "ethersmirrors:iron_calling_mirror",
+        "ethersmirrors:gold_calling_mirror",
+        "ethersmirrors:diamond_calling_mirror",
+        "ethersmirrors:netherite_calling_mirror",
+        # Beacon mirrors
+        "ethersmirrors:wood_beacon_mirror",
+        "ethersmirrors:stone_beacon_mirror",
+        "ethersmirrors:iron_beacon_mirror",
+        "ethersmirrors:gold_beacon_mirror",
+        "ethersmirrors:diamond_beacon_mirror",
+        "ethersmirrors:netherite_beacon_mirror",
+    ]

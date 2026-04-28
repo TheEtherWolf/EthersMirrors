@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GPG"],
+  "key": {
+    "G": {"item": "minecraft:glass_pane"},
+    "P": {"item": "minecraft:ender_pearl"}
+  },
+  "result": {"item": "ethersmirrors:mirror_shard", "count": 3}
+}

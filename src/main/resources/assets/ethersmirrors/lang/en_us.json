@@ -1,0 +1,73 @@
+{
+  "block.ethersmirrors.wood_teleport_mirror": "Wood Teleport Mirror",
+  "block.ethersmirrors.wood_calling_mirror": "Wood Calling Mirror",
+  "block.ethersmirrors.wood_pocket_mirror": "Wood Pocket Mirror",
+  "block.ethersmirrors.stone_teleport_mirror": "Stone Teleport Mirror",
+  "block.ethersmirrors.stone_calling_mirror": "Stone Calling Mirror",
+  "block.ethersmirrors.stone_pocket_mirror": "Stone Pocket Mirror",
+  "block.ethersmirrors.iron_teleport_mirror": "Iron Teleport Mirror",
+  "block.ethersmirrors.iron_calling_mirror": "Iron Calling Mirror",
+  "block.ethersmirrors.iron_pocket_mirror": "Iron Pocket Mirror",
+  "block.ethersmirrors.gold_teleport_mirror": "Gold Teleport Mirror",
+  "block.ethersmirrors.gold_calling_mirror": "Gold Calling Mirror",
+  "block.ethersmirrors.gold_pocket_mirror": "Gold Pocket Mirror",
+  "block.ethersmirrors.diamond_teleport_mirror": "Diamond Teleport Mirror",
+  "block.ethersmirrors.diamond_calling_mirror": "Diamond Calling Mirror",
+  "block.ethersmirrors.diamond_pocket_mirror": "Diamond Pocket Mirror",
+  "block.ethersmirrors.netherite_teleport_mirror": "Netherite Teleport Mirror",
+  "block.ethersmirrors.netherite_calling_mirror": "Netherite Calling Mirror",
+  "block.ethersmirrors.netherite_pocket_mirror": "Netherite Pocket Mirror",
+  "block.ethersmirrors.wood_beacon_mirror": "Wood Beacon Mirror",
+  "block.ethersmirrors.stone_beacon_mirror": "Stone Beacon Mirror",
+  "block.ethersmirrors.iron_beacon_mirror": "Iron Beacon Mirror",
+  "block.ethersmirrors.gold_beacon_mirror": "Gold Beacon Mirror",
+  "block.ethersmirrors.diamond_beacon_mirror": "Diamond Beacon Mirror",
+  "block.ethersmirrors.netherite_beacon_mirror": "Netherite Beacon Mirror",
+  "block.ethersmirrors.pocket_mirror": "Pocket Mirror",
+  "block.ethersmirrors.exit_mirror": "Exit Mirror",
+  "itemGroup.ethersmirrors.mirrors": "Ether's Mirrors",
+  "item.ethersmirrors.warp_target_upgrade": "Warp Target Upgrade",
+  "item.ethersmirrors.range_booster_upgrade": "Range Booster Upgrade",
+  "item.ethersmirrors.privacy_lock_upgrade": "Privacy Lock Upgrade",
+  "item.ethersmirrors.alarm_upgrade": "Alarm Upgrade",
+  "item.ethersmirrors.redstone_pulse_upgrade": "Redstone Pulse Upgrade",
+  "item.ethersmirrors.particle_aura_upgrade": "Particle Aura Upgrade",
+  "item.ethersmirrors.mute_ambient_upgrade": "Mute Ambient Upgrade",
+  "item.ethersmirrors.one_way_upgrade": "One Way Upgrade",
+  "item.ethersmirrors.cooldown_reducer_upgrade": "Cooldown Reducer Upgrade",
+  "item.ethersmirrors.time_lock_upgrade": "Time Lock Upgrade",
+  "item.ethersmirrors.link_lock_upgrade": "Link Lock Upgrade",
+  "item.ethersmirrors.pocket_mirror": "Pocket Mirror",
+  "item.ethersmirrors.mirror_shard": "Mirror Shard",
+  "item.ethersmirrors.pocket_crystal": "Pocket Expansion Crystal",
+
+  "advancements.ethersmirrors.root.title": "A Mirror, Darkly",
+  "advancements.ethersmirrors.root.description": "Craft and place your first teleport mirror.",
+
+  "advancements.ethersmirrors.first_teleport.title": "Through the Glass",
+  "advancements.ethersmirrors.first_teleport.description": "Teleport through a mirror for the first time.",
+
+  "advancements.ethersmirrors.mirror_upgraded.title": "Tempered Glass",
+  "advancements.ethersmirrors.mirror_upgraded.description": "Upgrade a mirror to the next material tier.",
+
+  "advancements.ethersmirrors.diamond_tier.title": "Crystal Network",
+  "advancements.ethersmirrors.diamond_tier.description": "Place a Diamond tier mirror.",
+
+  "advancements.ethersmirrors.netherite_tier.title": "Eternal Mirror",
+  "advancements.ethersmirrors.netherite_tier.description": "Upgrade a mirror all the way to Netherite.",
+
+  "advancements.ethersmirrors.calling_placed.title": "Hello?",
+  "advancements.ethersmirrors.calling_placed.description": "Place a Calling Mirror to communicate across dimensions.",
+
+  "advancements.ethersmirrors.first_call.title": "Mirror Call",
+  "advancements.ethersmirrors.first_call.description": "Initiate a mirror call with another player.",
+
+  "advancements.ethersmirrors.pocket_entered.title": "Personal Space",
+  "advancements.ethersmirrors.pocket_entered.description": "Step through a Pocket Mirror into your own dimension.",
+
+  "advancements.ethersmirrors.pocket_themed.title": "Interior Design",
+  "advancements.ethersmirrors.pocket_themed.description": "Change the theme of your pocket dimension.",
+
+  "advancements.ethersmirrors.beacon_placed.title": "Guiding Light",
+  "advancements.ethersmirrors.beacon_placed.description": "Place a Beacon Mirror to mark a location for everyone."
+}

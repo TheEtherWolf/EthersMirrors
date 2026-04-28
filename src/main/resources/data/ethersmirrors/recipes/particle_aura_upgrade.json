@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" G ", "GCG", " G "],
+  "key": {
+    "G": {"item": "minecraft:glass_pane"},
+    "C": {"item": "minecraft:glowstone_dust"}
+  },
+  "result": {"item": "ethersmirrors:particle_aura_upgrade", "count": 1}
+}

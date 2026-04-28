@@ -1,0 +1,96 @@
+import net.minecraftforge.gradle.common.util.RunConfig
+
+plugins {
+    id 'java'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.neoforged.gradle' version '[6.0.18,6.2)'
+    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    gradleVersion = '8.4'
+}
+
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
+
+java.toolchain.languageVersion = JavaLanguageVersion.of("${java_version}")
+
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+minecraft {
+    mappings channel: "${mappings_channel}", version: "${mappings_version}"
+
+    runs {
+        client { setupRunConfig(it, true) }
+        server { setupRunConfig(it, true) }
+    }
+}
+
+def setupRunConfig(RunConfig runConfig, boolean supportsGameTests, String directory = "run") {
+    runConfig.workingDirectory(file(directory))
+    runConfig.property 'forge.logging.console.level', 'debug'
+    if (supportsGameTests) {
+        runConfig.property 'forge.enabledGameTestNamespaces', 'ethersmirrors'
+    }
+    runConfig.mods.register("ethersmirrors").configure { sources(sourceSets.main) }
+}
+
+repositories {
+    maven {
+        name "MaxHenkel"
+        url "https://maven.maxhenkel.de/repository/public"
+    }
+    maven {
+        name "Modrinth"
+        url "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.neoforged:forge:${minecraft_version}-${forge_version}"
+
+    // Simple Voice Chat API (compile only)
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}"
+
+    // Simple Voice Chat runtime for dev testing
+    runtimeOnly fg.deobf("maven.modrinth:simple-voice-chat:forge-${minecraft_version}-${voicechat_version}")
+}
+
+jar {
+    manifest {
+        attributes([
+                "Specification-Title"     : project.name,
+                "Specification-Vendor"    : "Ether",
+                "Specification-Version"   : project.jar.archiveVersion,
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : project.jar.archiveVersion,
+                "Implementation-Vendor"   : "Ether",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "Automatic-Module-Name": "ethersmirrors"
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "ethersmirrors:diamond_tier",
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:netherite_teleport_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.netherite_tier.title"},
+    "description": {"translate": "advancements.ethersmirrors.netherite_tier.description"},
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "upgraded_to_netherite": {
+      "trigger": "ethersmirrors:mirror_upgraded",
+      "conditions": {
+        "tier": "netherite"
+      }
+    }
+  },
+  "rewards": {
+    "experience": 100
+  }
+}

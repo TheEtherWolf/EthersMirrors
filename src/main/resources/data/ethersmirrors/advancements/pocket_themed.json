@@ -1,0 +1,19 @@
+{
+  "parent": "ethersmirrors:pocket_entered",
+  "display": {
+    "icon": {
+      "item": "minecraft:amethyst_block"
+    },
+    "title": {"translate": "advancements.ethersmirrors.pocket_themed.title"},
+    "description": {"translate": "advancements.ethersmirrors.pocket_themed.description"},
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "set_theme": {
+      "trigger": "ethersmirrors:pocket_theme_set"
+    }
+  }
+}

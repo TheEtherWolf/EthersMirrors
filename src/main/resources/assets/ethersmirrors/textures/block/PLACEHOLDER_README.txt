@@ -1,0 +1,1 @@
+Replace with actual 16x16 mirror textures for each tier/type combination. Files needed: {tier}_{type}_mirror.png for all 18 combinations. User will provide custom models and textures.

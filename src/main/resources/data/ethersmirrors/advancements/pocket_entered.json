@@ -1,0 +1,19 @@
+{
+  "parent": "ethersmirrors:root",
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:wood_pocket_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.pocket_entered.title"},
+    "description": {"translate": "advancements.ethersmirrors.pocket_entered.description"},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_pocket": {
+      "trigger": "ethersmirrors:enter_pocket"
+    }
+  }
+}

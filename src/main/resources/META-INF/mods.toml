@@ -1,0 +1,43 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+authors="Ether"
+updateJSONURL="https://raw.githubusercontent.com/TheEtherWolf/EthersMirrors/main/update.json"
+displayURL="https://github.com/TheEtherWolf/EthersMirrors"
+
+[[mods]]
+modId="ethersmirrors"
+version="${file.jarVersion}"
+displayName="Ether's Mirrors"
+description='''
+Magical mirrors for teleportation, communication, and pocket dimensions.
+Three mirror types across six material tiers with permission-based networking.
+'''
+
+[[dependencies.ethersmirrors]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ethersmirrors]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ethersmirrors]]
+    modId="voicechat"
+    mandatory=false
+    versionRange="*"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.ethersmirrors]]
+    modId="xaerominimap"
+    mandatory=false
+    versionRange="*"
+    ordering="AFTER"
+    side="CLIENT"

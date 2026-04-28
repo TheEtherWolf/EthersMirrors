@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" S ", "SCS", " S "],
+  "key": {
+    "S": {"item": "minecraft:sugar"},
+    "C": {"item": "minecraft:clock"}
+  },
+  "result": {"item": "ethersmirrors:cooldown_reducer_upgrade", "count": 1}
+}

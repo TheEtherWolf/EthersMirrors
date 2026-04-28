@@ -1,0 +1,7 @@
+{
+  "parent": "ethersmirrors:block/mirror_base",
+  "textures": {
+    "front": "ethersmirrors:block/wood_teleport_mirror",
+    "particle": "ethersmirrors:block/wood_teleport_mirror"
+  }
+}

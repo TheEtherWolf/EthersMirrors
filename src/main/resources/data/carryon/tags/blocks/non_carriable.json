@@ -1,0 +1,30 @@
+{
+  "replace": false,
+  "values": [
+    "ethersmirrors:wood_teleport_mirror",
+    "ethersmirrors:stone_teleport_mirror",
+    "ethersmirrors:iron_teleport_mirror",
+    "ethersmirrors:gold_teleport_mirror",
+    "ethersmirrors:diamond_teleport_mirror",
+    "ethersmirrors:netherite_teleport_mirror",
+    "ethersmirrors:wood_calling_mirror",
+    "ethersmirrors:stone_calling_mirror",
+    "ethersmirrors:iron_calling_mirror",
+    "ethersmirrors:gold_calling_mirror",
+    "ethersmirrors:diamond_calling_mirror",
+    "ethersmirrors:netherite_calling_mirror",
+    "ethersmirrors:wood_pocket_mirror",
+    "ethersmirrors:stone_pocket_mirror",
+    "ethersmirrors:iron_pocket_mirror",
+    "ethersmirrors:gold_pocket_mirror",
+    "ethersmirrors:diamond_pocket_mirror",
+    "ethersmirrors:netherite_pocket_mirror",
+    "ethersmirrors:wood_beacon_mirror",
+    "ethersmirrors:stone_beacon_mirror",
+    "ethersmirrors:iron_beacon_mirror",
+    "ethersmirrors:gold_beacon_mirror",
+    "ethersmirrors:diamond_beacon_mirror",
+    "ethersmirrors:netherite_beacon_mirror",
+    "ethersmirrors:exit_mirror"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" G ", "GCG", " G "],
+  "key": {
+    "G": {"item": "minecraft:glass_pane"},
+    "C": {"item": "minecraft:white_wool"}
+  },
+  "result": {"item": "ethersmirrors:mute_ambient_upgrade", "count": 1}
+}

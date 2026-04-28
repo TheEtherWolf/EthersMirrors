@@ -1,0 +1,22 @@
+{
+  "parent": "ethersmirrors:root",
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:wood_beacon_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.beacon_placed.title"},
+    "description": {"translate": "advancements.ethersmirrors.beacon_placed.description"},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "placed_beacon": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "block": "ethersmirrors:wood_beacon_mirror"
+      }
+    }
+  }
+}

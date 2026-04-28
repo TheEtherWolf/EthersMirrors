@@ -1,0 +1,19 @@
+{
+  "parent": "ethersmirrors:first_teleport",
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:stone_teleport_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.mirror_upgraded.title"},
+    "description": {"translate": "advancements.ethersmirrors.mirror_upgraded.description"},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "upgraded": {
+      "trigger": "ethersmirrors:mirror_upgraded"
+    }
+  }
+}

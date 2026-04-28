@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" C ", "CIC", " C "],
+  "key": {
+    "C": {"item": "minecraft:chain"},
+    "I": {"item": "minecraft:iron_nugget"}
+  },
+  "result": {"item": "ethersmirrors:link_lock_upgrade", "count": 1}
+}

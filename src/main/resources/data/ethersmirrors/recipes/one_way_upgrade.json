@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" G ", "GAG", " G "],
+  "key": {
+    "G": {"item": "minecraft:glass_pane"},
+    "A": {"item": "minecraft:arrow"}
+  },
+  "result": {"item": "ethersmirrors:one_way_upgrade", "count": 1}
+}

@@ -1,0 +1,22 @@
+{
+  "parent": "ethersmirrors:first_teleport",
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:diamond_teleport_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.diamond_tier.title"},
+    "description": {"translate": "advancements.ethersmirrors.diamond_tier.description"},
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "placed_diamond": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "block": "ethersmirrors:diamond_teleport_mirror"
+      }
+    }
+  }
+}

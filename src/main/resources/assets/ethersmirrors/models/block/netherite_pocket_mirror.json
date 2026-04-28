@@ -1,0 +1,7 @@
+{
+  "parent": "ethersmirrors:block/mirror_base",
+  "textures": {
+    "front": "ethersmirrors:block/netherite_pocket_mirror",
+    "particle": "ethersmirrors:block/netherite_pocket_mirror"
+  }
+}

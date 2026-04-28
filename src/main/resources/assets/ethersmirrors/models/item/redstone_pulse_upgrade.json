@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ethersmirrors:item/redstone_pulse_upgrade"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,part=master":    { "model": "ethersmirrors:block/wood_beacon_mirror",     "y": 0,   "uvlock": true },
+    "facing=south,part=master":    { "model": "ethersmirrors:block/wood_beacon_mirror",     "y": 180, "uvlock": true },
+    "facing=east,part=master":     { "model": "ethersmirrors:block/wood_beacon_mirror",     "y": 90,  "uvlock": true },
+    "facing=west,part=master":     { "model": "ethersmirrors:block/wood_beacon_mirror",     "y": 270, "uvlock": true },
+    "facing=north,part=right":     { "model": "ethersmirrors:block/wood_beacon_mirror_br",  "y": 0,   "uvlock": true },
+    "facing=south,part=right":     { "model": "ethersmirrors:block/wood_beacon_mirror_br",  "y": 180, "uvlock": true },
+    "facing=east,part=right":      { "model": "ethersmirrors:block/wood_beacon_mirror_br",  "y": 90,  "uvlock": true },
+    "facing=west,part=right":      { "model": "ethersmirrors:block/wood_beacon_mirror_br",  "y": 270, "uvlock": true },
+    "facing=north,part=up":        { "model": "ethersmirrors:block/wood_beacon_mirror_tl",  "y": 0,   "uvlock": true },
+    "facing=south,part=up":        { "model": "ethersmirrors:block/wood_beacon_mirror_tl",  "y": 180, "uvlock": true },
+    "facing=east,part=up":         { "model": "ethersmirrors:block/wood_beacon_mirror_tl",  "y": 90,  "uvlock": true },
+    "facing=west,part=up":         { "model": "ethersmirrors:block/wood_beacon_mirror_tl",  "y": 270, "uvlock": true },
+    "facing=north,part=up_right":  { "model": "ethersmirrors:block/wood_beacon_mirror_tr",  "y": 0,   "uvlock": true },
+    "facing=south,part=up_right":  { "model": "ethersmirrors:block/wood_beacon_mirror_tr",  "y": 180, "uvlock": true },
+    "facing=east,part=up_right":   { "model": "ethersmirrors:block/wood_beacon_mirror_tr",  "y": 90,  "uvlock": true },
+    "facing=west,part=up_right":   { "model": "ethersmirrors:block/wood_beacon_mirror_tr",  "y": 270, "uvlock": true }
+  }
+}

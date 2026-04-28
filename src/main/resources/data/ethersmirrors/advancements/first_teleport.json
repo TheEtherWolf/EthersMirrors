@@ -1,0 +1,19 @@
+{
+  "parent": "ethersmirrors:root",
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:wood_teleport_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.first_teleport.title"},
+    "description": {"translate": "advancements.ethersmirrors.first_teleport.description"},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "teleported": {
+      "trigger": "ethersmirrors:mirror_teleported"
+    }
+  }
+}

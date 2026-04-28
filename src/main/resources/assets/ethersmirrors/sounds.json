@@ -1,0 +1,47 @@
+{
+  "mirror_ring": {
+    "subtitle": "Mirror ringing",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "type": "event"
+      }
+    ]
+  },
+  "mirror_connect": {
+    "subtitle": "Mirror connected",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate",
+        "type": "event"
+      }
+    ]
+  },
+  "mirror_disconnect": {
+    "subtitle": "Mirror disconnected",
+    "sounds": [
+      {
+        "name": "minecraft:block/glass/break1",
+        "type": "event"
+      }
+    ]
+  },
+  "mirror_teleport": {
+    "subtitle": "Mirror teleport",
+    "sounds": [
+      {
+        "name": "minecraft:entity/enderman/teleport",
+        "type": "event"
+      }
+    ]
+  },
+  "mirror_ambient": {
+    "subtitle": "Mirror humming",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "event"
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ethersmirrors:item/cooldown_reducer_upgrade"
+  }
+}

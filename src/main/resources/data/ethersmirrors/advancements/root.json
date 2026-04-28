@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "ethersmirrors:wood_teleport_mirror"
+    },
+    "title": {"translate": "advancements.ethersmirrors.root.title"},
+    "description": {"translate": "advancements.ethersmirrors.root.description"},
+    "background": "minecraft:textures/block/crying_obsidian.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "placed_mirror": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "block": "ethersmirrors:wood_teleport_mirror"
+      }
+    }
+  }
+}
