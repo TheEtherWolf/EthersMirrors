@@ -69,11 +69,13 @@ public class ServerboundCallRequestPacket {
 
             com.ether.mirrors.advancement.MirrorsTriggers.MIRROR_CALL_MADE.trigger(caller);
 
-            // Notify the callee
+            // Notify the callee (incoming call screen)
             MirrorsNetwork.sendToPlayer(callee, new ClientboundCallIncomingPacket(
                     call.callId, caller.getGameProfile().getName(), caller.getUUID()));
 
-            caller.displayClientMessage(Component.literal("Calling " + callee.getGameProfile().getName() + "..."), true);
+            // Notify the caller — open an outgoing "Calling…" screen instead of just an action-bar message
+            MirrorsNetwork.sendToPlayer(caller, new ClientboundCallRingingPacket(
+                    call.callId, callee.getGameProfile().getName()));
         });
         ctx.get().setPacketHandled(true);
     }

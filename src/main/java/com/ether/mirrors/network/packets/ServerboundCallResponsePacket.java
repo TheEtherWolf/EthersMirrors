@@ -51,6 +51,14 @@ public class ServerboundCallResponsePacket {
                     // Notify both players
                     MirrorsNetwork.sendToPlayer(caller, new ClientboundCallEstablishedPacket(call.callId, callee.getGameProfile().getName()));
                     MirrorsNetwork.sendToPlayer(callee, new ClientboundCallEstablishedPacket(call.callId, caller.getGameProfile().getName()));
+
+                    // If Simple Voice Chat is not installed, tell both players voice won't work
+                    if (!callManager.isSVCAvailable()) {
+                        Component noVoiceMsg = Component.literal(
+                                "[Mirror Call] Simple Voice Chat is not installed — this call is text-only. Voice is unavailable.");
+                        caller.displayClientMessage(noVoiceMsg, false);
+                        callee.displayClientMessage(noVoiceMsg, false);
+                    }
                 } else {
                     // One or both players went offline between ringing and accept — clean up
                     callManager.endCall(msg.callId, responder.server);

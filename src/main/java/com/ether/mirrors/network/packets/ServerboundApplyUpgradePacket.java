@@ -75,7 +75,11 @@ public class ServerboundApplyUpgradePacket {
 
             // Consume upgrade item from inventory
             var upgradeItemOpt = MirrorsItems.UPGRADE_ITEMS.get(upgradeType);
-            if (upgradeItemOpt == null) return;
+            if (upgradeItemOpt == null) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        upgradeType.getDisplayName() + " upgrade is not registered. This is a bug — please report it."), true);
+                return;
+            }
             net.minecraft.world.item.Item upgradeItem = upgradeItemOpt.get();
 
             // Find and remove one upgrade item from inventory

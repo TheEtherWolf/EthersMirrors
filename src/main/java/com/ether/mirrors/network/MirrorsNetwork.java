@@ -83,6 +83,11 @@ public class MirrorsNetwork {
                 ClientboundCallIncomingPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
+        CHANNEL.registerMessage(id++, ClientboundCallRingingPacket.class,
+                ClientboundCallRingingPacket::encode, ClientboundCallRingingPacket::decode,
+                ClientboundCallRingingPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
         CHANNEL.registerMessage(id++, ClientboundCallEstablishedPacket.class,
                 ClientboundCallEstablishedPacket::encode, ClientboundCallEstablishedPacket::decode,
                 ClientboundCallEstablishedPacket::handle,

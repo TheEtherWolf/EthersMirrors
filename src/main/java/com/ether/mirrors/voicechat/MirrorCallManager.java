@@ -207,7 +207,7 @@ public class MirrorCallManager {
     private static boolean svcClassChecked = false;
     private static boolean svcClassPresent = false;
 
-    private boolean isSVCAvailable() {
+    public boolean isSVCAvailable() {
         if (!svcClassChecked) {
             try {
                 Class.forName("de.maxhenkel.voicechat.api.VoicechatApi");

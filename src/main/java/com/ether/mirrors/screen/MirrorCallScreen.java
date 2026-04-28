@@ -4,15 +4,25 @@ import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ClientCallState;
 import com.ether.mirrors.network.packets.ServerboundCallEndPacket;
 import com.ether.mirrors.network.packets.ServerboundCallResponsePacket;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class MirrorCallScreen extends Screen {
 
-    public enum Mode { INCOMING, ACTIVE }
+    public enum Mode { INCOMING, OUTGOING, ACTIVE }
+
+    /**
+     * Screen to restore when an incoming or outgoing call is cancelled/declined.
+     * Set by the incoming/ringing packet handlers before opening this screen.
+     * Cleared on accept (call becomes active) or on close after decline/cancel.
+     */
+    @Nullable
+    public static Screen previousScreen = null;
 
     private Mode mode;
     private final String otherName;
@@ -48,15 +58,27 @@ public class MirrorCallScreen extends Screen {
             addRenderableWidget(MirrorButton.green(cx - 100, btnY, 90, 16,
                     Component.literal("Accept"), b -> {
                         MirrorsNetwork.sendToServer(new ServerboundCallResponsePacket(callId, true));
+                        // previousScreen is cleared by ClientboundCallEstablishedPacket handler
                         // Don't transition to ACTIVE here — wait for ClientboundCallEstablishedPacket
-                        // from the server to confirm the call was actually established.
                     }));
             // Decline button
             addRenderableWidget(MirrorButton.red(cx + 10, btnY, 90, 16,
                     Component.literal("Decline"), b -> {
                         MirrorsNetwork.sendToServer(new ServerboundCallResponsePacket(callId, false));
                         ClientCallState.clearIncomingCall();
-                        onClose();
+                        Screen prev = previousScreen;
+                        previousScreen = null;
+                        Minecraft.getInstance().setScreen(prev); // restore management screen if it was open
+                    }));
+        } else if (mode == Mode.OUTGOING) {
+            // Cancel Call button
+            addRenderableWidget(MirrorButton.red(cx - 50, btnY, 100, 16,
+                    Component.literal("Cancel Call"), b -> {
+                        MirrorsNetwork.sendToServer(new ServerboundCallEndPacket(callId));
+                        ClientCallState.clearOutgoingCall();
+                        Screen prev = previousScreen;
+                        previousScreen = null;
+                        Minecraft.getInstance().setScreen(prev);
                     }));
         } else {
             // End Call button
@@ -88,6 +110,13 @@ public class MirrorCallScreen extends Screen {
             g.drawCenteredString(font, "Incoming Mirror Call", cx, pt + 4, UITheme.TEXT_MUTED);
             g.drawCenteredString(font, "* " + otherName + " *", cx, pt + 14, UITheme.TEXT_GOLD);
             g.drawCenteredString(font, "is calling you", cx, pt + 36, UITheme.TEXT_LAVENDER);
+        } else if (mode == Mode.OUTGOING) {
+            g.drawCenteredString(font, "Calling...", cx, pt + 4, UITheme.TEXT_MUTED);
+            g.drawCenteredString(font, "* " + otherName + " *", cx, pt + 14, UITheme.TEXT_GOLD);
+            // Pulsing waiting indicator
+            int dotAlpha = (int)(pulse * 0xFF);
+            g.fill(cx - 4, pt + 36, cx + 4, pt + 44, UITheme.withAlpha(UITheme.TEXT_LAVENDER, dotAlpha));
+            g.drawCenteredString(font, "Waiting for answer...", cx, pt + 38, UITheme.TEXT_MUTED);
         } else {
             g.drawCenteredString(font, "Mirror Call Active", cx, pt + 4, UITheme.TEXT_MUTED);
             g.drawCenteredString(font, "* " + otherName + " *", cx, pt + 14, UITheme.TEXT_GOLD);

@@ -33,12 +33,14 @@ public class ClientboundCallIncomingPacket {
     public static void handle(ClientboundCallIncomingPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             if (Minecraft.getInstance().player == null) return;
-            Minecraft.getInstance().player.playSound(MirrorsSounds.MIRROR_RING.get(), 1.0F, 1.0F);
+            Minecraft mc = Minecraft.getInstance();
+            mc.player.playSound(MirrorsSounds.MIRROR_RING.get(), 1.0F, 1.0F);
             ClientCallState.setIncomingCall(msg.callId, msg.callerName, msg.callerUUID);
-            Minecraft.getInstance().setScreen(
-                    new com.ether.mirrors.screen.MirrorCallScreen(
-                            com.ether.mirrors.screen.MirrorCallScreen.Mode.INCOMING,
-                            msg.callerName, msg.callId));
+            // Save whatever screen was open so we can restore it if the call is declined
+            com.ether.mirrors.screen.MirrorCallScreen.previousScreen = mc.screen;
+            mc.setScreen(new com.ether.mirrors.screen.MirrorCallScreen(
+                    com.ether.mirrors.screen.MirrorCallScreen.Mode.INCOMING,
+                    msg.callerName, msg.callId));
         });
         ctx.get().setPacketHandled(true);
     }

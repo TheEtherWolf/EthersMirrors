@@ -32,6 +32,8 @@ public class ClientboundCallEstablishedPacket {
             if (Minecraft.getInstance().player == null) return;
             Minecraft.getInstance().player.playSound(MirrorsSounds.MIRROR_CONNECT.get(), 1.0F, 1.0F);
             ClientCallState.setActiveCall(msg.callId, msg.otherPlayerName);
+            // Call accepted — don't restore previousScreen when the active call ends
+            com.ether.mirrors.screen.MirrorCallScreen.previousScreen = null;
             // Open active call screen (or update existing incoming screen)
             Minecraft mc = Minecraft.getInstance();
             if (!(mc.screen instanceof com.ether.mirrors.screen.MirrorCallScreen callScreen)
