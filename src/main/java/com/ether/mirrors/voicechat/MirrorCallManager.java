@@ -182,7 +182,25 @@ public class MirrorCallManager {
                 }
             }
         }
-        toCancel.forEach(id -> endCall(id, server));
+        for (UUID id : toCancel) {
+            // Send feedback before endCall removes the call from the map
+            ActiveCall call = activeCalls.get(id);
+            if (call != null && server != null && call.getState() == CallState.RINGING) {
+                net.minecraft.server.level.ServerPlayer caller = server.getPlayerList().getPlayer(call.callerUUID);
+                net.minecraft.server.level.ServerPlayer callee = server.getPlayerList().getPlayer(call.calleeUUID);
+                String callerName = caller != null ? caller.getGameProfile().getName() : "someone";
+                String calleeName = callee != null ? callee.getGameProfile().getName() : "someone";
+                if (caller != null) {
+                    caller.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal(calleeName + " didn't answer."), true);
+                }
+                if (callee != null) {
+                    callee.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal("Missed call from " + callerName + "."), false);
+                }
+            }
+            endCall(id, server);
+        }
     }
 
     // Cache whether the SVC class is on the classpath — Class.forName is slow and never changes.

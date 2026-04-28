@@ -10,7 +10,8 @@ public enum MirrorUpgradeType {
     MUTE_AMBIENT("mute_ambient"),
     ONE_WAY("one_way"),
     COOLDOWN_REDUCER("cooldown_reducer"),
-    TIME_LOCK("time_lock");
+    TIME_LOCK("time_lock"),
+    LINK_LOCK("link_lock");
 
     private final String id;
 
@@ -37,6 +38,7 @@ public enum MirrorUpgradeType {
             case ONE_WAY -> "One Way";
             case COOLDOWN_REDUCER -> "Cooldown Reducer";
             case TIME_LOCK -> "Time Lock";
+            case LINK_LOCK -> "Link Lock";
         };
     }
 
@@ -52,6 +54,7 @@ public enum MirrorUpgradeType {
             case ONE_WAY -> "Mirror can only receive teleports, not send them";
             case COOLDOWN_REDUCER -> "Reduces teleport cooldown by " + com.ether.mirrors.MirrorsConfig.COOLDOWN_REDUCER_PERCENT.get() + "%";
             case TIME_LOCK -> "Mirror only works during day or night (set via /ethersmirrors timelock)";
+            case LINK_LOCK -> "Prevents other players from binding Mirror Shards to this mirror";
         };
     }
 }

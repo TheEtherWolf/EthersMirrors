@@ -61,6 +61,18 @@ public class ServerboundApplyUpgradePacket {
                 return;
             }
 
+            // Conflict check: WARP_TARGET and ONE_WAY are mutually exclusive
+            if (upgradeType == MirrorUpgradeType.WARP_TARGET && mirrorBE.hasUpgrade(MirrorUpgradeType.ONE_WAY)) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        "WARP_TARGET conflicts with ONE_WAY. Remove ONE_WAY first."), true);
+                return;
+            }
+            if (upgradeType == MirrorUpgradeType.ONE_WAY && mirrorBE.hasUpgrade(MirrorUpgradeType.WARP_TARGET)) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        "ONE_WAY conflicts with WARP_TARGET. Remove WARP_TARGET first."), true);
+                return;
+            }
+
             // Consume upgrade item from inventory
             var upgradeItemOpt = MirrorsItems.UPGRADE_ITEMS.get(upgradeType);
             if (upgradeItemOpt == null) return;

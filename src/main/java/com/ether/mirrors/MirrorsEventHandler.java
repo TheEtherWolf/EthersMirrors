@@ -483,6 +483,13 @@ public class MirrorsEventHandler {
             return;
         }
 
+        // LINK_LOCK: only the owner can bind shards to a link-locked mirror
+        if (mirrorBE.hasUpgrade(com.ether.mirrors.item.MirrorUpgradeType.LINK_LOCK) && !mirrorBE.isOwner(serverPlayer)) {
+            serverPlayer.displayClientMessage(
+                    Component.literal("This mirror is link-locked. Only the owner can bind shards to it."), true);
+            return;
+        }
+
         String mirrorName = entry.name != null && !entry.name.isEmpty() ? entry.name : "Unnamed";
         CompoundTag nbt = heldMain.getOrCreateTag();
         nbt.putUUID("BoundMirrorId", entry.mirrorId);
@@ -524,6 +531,52 @@ public class MirrorsEventHandler {
             event.setCanceled(true);
             serverPlayer.displayClientMessage(
                     Component.literal("You must be near a mirror to chat."), true);
+        }
+    }
+
+    /**
+     * Prevent visitors from breaking blocks in someone else's pocket dimension.
+     * Only the pocket owner (and creative ops) may modify blocks in their own pocket.
+     */
+    @SubscribeEvent
+    public static void onPocketBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
+        if (!serverLevel.dimension().equals(PocketMirrorBlock.POCKET_DIMENSION)) return;
+
+        Player player = event.getPlayer();
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+        if (player.isCreative() && player.hasPermissions(2)) return;
+
+        PocketDimensionData pocketData = PocketDimensionData.get(serverPlayer.server);
+        UUID pocketOwner = pocketData.getPocketOwnerForPlayer(serverPlayer.getUUID());
+        if (pocketOwner == null) return;
+
+        if (!serverPlayer.getUUID().equals(pocketOwner)) {
+            event.setCanceled(true);
+            serverPlayer.displayClientMessage(
+                    Component.literal("You can't break blocks in someone else's pocket dimension."), true);
+        }
+    }
+
+    /**
+     * Prevent visitors from placing blocks in someone else's pocket dimension.
+     */
+    @SubscribeEvent
+    public static void onPocketBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
+        if (!serverLevel.dimension().equals(PocketMirrorBlock.POCKET_DIMENSION)) return;
+
+        if (!(event.getEntity() instanceof ServerPlayer serverPlayer)) return;
+        if (serverPlayer.isCreative() && serverPlayer.hasPermissions(2)) return;
+
+        PocketDimensionData pocketData = PocketDimensionData.get(serverPlayer.server);
+        UUID pocketOwner = pocketData.getPocketOwnerForPlayer(serverPlayer.getUUID());
+        if (pocketOwner == null) return;
+
+        if (!serverPlayer.getUUID().equals(pocketOwner)) {
+            event.setCanceled(true);
+            serverPlayer.displayClientMessage(
+                    Component.literal("You can't place blocks in someone else's pocket dimension."), true);
         }
     }
 

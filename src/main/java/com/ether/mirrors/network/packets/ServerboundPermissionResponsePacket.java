@@ -79,11 +79,21 @@ public class ServerboundPermissionResponsePacket {
                 return;
             }
 
+            if (msg.accepted) {
+                // Security: verify a pending request actually exists before granting.
+                // This prevents a malicious client from forging permission grants for arbitrary players.
+                if (!permData.getPendingRequests(grantor.getUUID()).contains(msg.requesterUUID)) {
+                    com.ether.mirrors.EthersMirrors.LOGGER.warn(
+                            "[EthersMirrors] {} attempted to forge a permission grant for {} (no pending request)",
+                            grantor.getGameProfile().getName(), msg.requesterUUID);
+                    return;
+                }
+            }
+
             // Remove the pending request
             permData.removePendingRequest(grantor.getUUID(), msg.requesterUUID);
 
             if (msg.accepted) {
-                // Only grant if there was actually a pending request (prevent arbitrary grants)
                 // Grant the selected permissions
                 if ((msg.permissionFlags & FLAG_USE) != 0) {
                     permData.grantPermission(grantor.getUUID(), msg.requesterUUID, PermissionData.PermissionLevel.USE);
