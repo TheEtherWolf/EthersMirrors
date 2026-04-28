@@ -13,6 +13,7 @@ public class PocketExpansionScreen extends Screen {
 
     private int currentSize;
     private final int maxSize;
+    private int pendingAmount = 0; // > 0 means awaiting confirmation
 
     private static final ExpansionOption[] OPTIONS = {
             new ExpansionOption( 16,  8,  UITheme.BTN_GREEN, "Oak Planks"      ),
@@ -35,23 +36,42 @@ public class PocketExpansionScreen extends Screen {
 
     @Override
     protected void init() {
+        rebuildButtons();
+    }
+
+    private void rebuildButtons() {
+        clearWidgets();
         int pl = panelLeft(), pt = panelTop();
         int cx = pl + PANEL_W / 2;
         int startY = pt + 78;
 
-        for (int i = 0; i < OPTIONS.length; i++) {
-            ExpansionOption opt = OPTIONS[i];
-            int amount  = opt.amount();
-            int cost    = opt.cost();
-            int color   = opt.borderColor();
-            String mat  = opt.material();
-            boolean can = (currentSize + amount) <= maxSize;
+        if (pendingAmount > 0) {
+            // Show confirm/cancel row
+            g_pendingAmount = pendingAmount; // stored for render
+            addRenderableWidget(MirrorButton.red(cx - 130, startY, 124, 18,
+                    Component.literal("Cancel"), b -> { pendingAmount = 0; rebuildButtons(); }));
+            addRenderableWidget(MirrorButton.green(cx + 6, startY, 124, 18,
+                    Component.literal("Confirm Expand +%d".formatted(pendingAmount)), b -> {
+                        MirrorsNetwork.sendToServer(new ServerboundExpandPocketPacket(pendingAmount));
+                        onClose();
+                    }));
+        } else {
+            g_pendingAmount = 0;
+            for (int i = 0; i < OPTIONS.length; i++) {
+                ExpansionOption opt = OPTIONS[i];
+                int amount  = opt.amount();
+                int cost    = opt.cost();
+                int color   = opt.borderColor();
+                String mat  = opt.material();
+                boolean can = (currentSize + amount) <= maxSize;
 
-            String label = "+%d blocks  (%d %s)".formatted(amount, cost, mat);
-            MirrorButton btn = MirrorButton.of(cx - 130, startY + i * 24, 260, 18,
-                    Component.literal(label), b -> expand(amount), color, UITheme.TEXT_WHITE);
-            btn.active = can;
-            addRenderableWidget(btn);
+                String label = "+%d blocks  (%d %s)".formatted(amount, cost, mat);
+                MirrorButton btn = MirrorButton.of(cx - 130, startY + i * 24, 260, 18,
+                        Component.literal(label), b -> { pendingAmount = amount; rebuildButtons(); },
+                        color, UITheme.TEXT_WHITE);
+                btn.active = can;
+                addRenderableWidget(btn);
+            }
         }
 
         // Close
@@ -60,10 +80,8 @@ public class PocketExpansionScreen extends Screen {
                 Component.literal("Close"), b -> onClose()));
     }
 
-    private void expand(int amount) {
-        MirrorsNetwork.sendToServer(new ServerboundExpandPocketPacket(amount));
-        onClose();
-    }
+    // Used to pass pendingAmount to render without adding a second field
+    private int g_pendingAmount = 0;
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
@@ -123,6 +141,13 @@ public class PocketExpansionScreen extends Screen {
                 cx, barY + 24, UITheme.withAlpha(UITheme.TEXT_MUTED, 0x99));
 
         UITheme.drawRule(g, pl + 8, pr - 8, pt + 74);
+
+        // Confirmation prompt
+        if (g_pendingAmount > 0) {
+            g.drawCenteredString(font,
+                    "Expand by +" + g_pendingAmount + " blocks. Are you sure?",
+                    cx, pt + 78 - 12, UITheme.TEXT_GOLD);
+        }
 
         super.render(g, mouseX, mouseY, partial);
     }

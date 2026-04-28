@@ -151,14 +151,16 @@ public class MirrorManagementScreen extends Screen {
                                         MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundWarpLockTogglePacket(mirrorPos, false));
                                         warpTargetLocked = false;
                                         rebuildWidgets();
-                                    }));
+                                    })).setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                            Component.literal("Allow the warp destination to be changed")));
                         } else {
                             addRenderableWidget(MirrorButton.teal(pl + PANEL_W - 130, rowY + 7, 62, 14,
                                     Component.literal("Lock"), b -> {
                                         MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundWarpLockTogglePacket(mirrorPos, true));
                                         warpTargetLocked = true;
                                         rebuildWidgets();
-                                    }));
+                                    })).setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                            Component.literal("Prevent the warp destination from being changed")));
                         }
                     }
                 } else {
@@ -309,13 +311,17 @@ public class MirrorManagementScreen extends Screen {
             addRenderableWidget(MirrorButton.gold(bx, actionY, 90, 16,
                     Component.literal("Rename"), b -> {
                         this.minecraft.setScreen(new MirrorNamingScreen(mirrorPos, mirrorName, true).withContext(tierName, typeName));
-                    }));
+                    })).setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                            Component.literal("Set a custom name for this mirror")));
             boolean isMaxTier = "netherite".equals(tierName);
             MirrorButton upgBtn = MirrorButton.purple(bx + 96, actionY, 110, 16,
                     Component.literal("Upgrade Tier"), b -> {
                         MirrorsNetwork.sendToServer(new ServerboundUpgradeMirrorTierPacket(mirrorPos));
                     });
             upgBtn.active = !isMaxTier;
+            upgBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    isMaxTier ? Component.literal("Already at maximum tier")
+                              : Component.literal("Upgrade to the next tier (requires materials)")));
             addRenderableWidget(upgBtn);
 
             // Pick Up button — two-step confirmation to prevent accidental pickup
@@ -324,13 +330,15 @@ public class MirrorManagementScreen extends Screen {
                         Component.literal("Confirm?"), b -> {
                             MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundPickUpMirrorPacket(mirrorPos));
                             onClose();
-                        }));
+                        })).setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                Component.literal("Confirm: remove the mirror and add it to your inventory")));
             } else {
                 addRenderableWidget(MirrorButton.red(bx + 212, actionY, 90, 16,
                         Component.literal("Pick Up"), b -> {
                             pendingPickUp = true;
                             rebuildWidgets();
-                        }));
+                        })).setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                Component.literal("Remove the mirror block and add it to your inventory")));
             }
 
             // Theme / Time / Weather — only for pocket mirrors

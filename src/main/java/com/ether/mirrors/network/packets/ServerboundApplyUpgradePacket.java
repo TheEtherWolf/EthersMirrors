@@ -73,6 +73,22 @@ public class ServerboundApplyUpgradePacket {
                 return;
             }
 
+            // Type/tier compatibility checks
+            com.ether.mirrors.util.MirrorType mirrorType = mirrorBE.getMirrorType();
+            com.ether.mirrors.util.MirrorTier mirrorTier = mirrorBE.getTier();
+            if ((upgradeType == MirrorUpgradeType.WARP_TARGET || upgradeType == MirrorUpgradeType.ONE_WAY)
+                    && mirrorType != com.ether.mirrors.util.MirrorType.TELEPORT) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        upgradeType.getDisplayName() + " only works on Teleport mirrors."), true);
+                return;
+            }
+            if (upgradeType == MirrorUpgradeType.RANGE_BOOSTER
+                    && mirrorTier.ordinal() < com.ether.mirrors.util.MirrorTier.IRON.ordinal()) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        "Range Booster requires an Iron-tier mirror or higher."), true);
+                return;
+            }
+
             // Consume upgrade item from inventory
             var upgradeItemOpt = MirrorsItems.UPGRADE_ITEMS.get(upgradeType);
             if (upgradeItemOpt == null) {

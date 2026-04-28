@@ -77,6 +77,14 @@ public class ServerboundCameraViewPacket {
                         target.pos, target.dimension
                 );
 
+                // Notify mirror owner that someone is viewing their camera (action bar, not chat)
+                if (!isOwner) {
+                    cameraTarget.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal(
+                                    player.getGameProfile().getName() + " is viewing your mirror."),
+                            true);
+                }
+
                 // Send vanilla camera swap packet
                 player.connection.send(new ClientboundSetCameraPacket(cameraTarget));
 

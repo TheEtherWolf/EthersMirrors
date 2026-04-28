@@ -16,6 +16,9 @@ public class PermissionData extends SavedData {
         USE("use"),
         VIEW_CAMERA("view_camera"),
         BREAK("break"),
+        // NOTE: POCKET_ACCESS is reserved for future per-mirror pocket entry control.
+        // Currently unused in canPlayerUseMirror checks — pocket entry is controlled by
+        // enterPocket() directly (owner or invited guests via ServerboundEnterPocketPacket).
         POCKET_ACCESS("pocket_access");
 
         private final String name;

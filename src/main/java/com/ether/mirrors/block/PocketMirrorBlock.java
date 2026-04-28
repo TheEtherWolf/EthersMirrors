@@ -114,6 +114,7 @@ public class PocketMirrorBlock extends MirrorBlock {
                     serverPlayer.getYRot(), serverPlayer.getXRot(),
                     level.dimension());
         }
+        boolean isFirstEntry = !region.roomBuilt;
         pocketData.setPlayerInPocket(serverPlayer.getUUID(), pocketOwner);
 
         // Teleport first — ensures destination chunks are loaded
@@ -126,6 +127,22 @@ public class PocketMirrorBlock extends MirrorBlock {
         // Build room and barriers AFTER teleport
         buildRoomIfNeeded(pocketLevel, region, pocketData);
         applyTierBarriers(pocketLevel, region, entryTier);
+
+        // First-entry tutorial message
+        if (isFirstEntry) {
+            serverPlayer.sendSystemMessage(Component.literal(
+                    "[Ether's Mirrors] Welcome to your pocket dimension! Use a Netherite mirror for full access. "
+                    + "Sneak + right-click the exit mirror to expand or manage this dimension."));
+        }
+
+        // Barrier feedback — tell visitors how much space they can access
+        if (entryTier != MirrorTier.NETHERITE) {
+            int half = getTierHalf(entryTier, region.currentSize / 2);
+            serverPlayer.displayClientMessage(Component.literal(
+                    "Your " + entryTier.getDisplayName() + " mirror limits access to the inner "
+                    + (half * 2) + "x" + (half * 2)
+                    + " zone. Use a Netherite mirror for full access."), true);
+        }
 
         // Place exit mirror at spawn floor if not already there
         BlockState exitState = pocketLevel.getBlockState(spawnPos);

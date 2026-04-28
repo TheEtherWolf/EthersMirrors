@@ -233,6 +233,8 @@ public class PermissionScreen extends Screen {
         g.drawString(font, "Player", pl + 10, startY - 8, UITheme.TEXT_MUTED, false);
         g.drawString(font, "Permissions", pl + 170, startY - 8, UITheme.TEXT_MUTED, false);
 
+        String hoveredTooltip = null;
+
         int gEnd = Math.min(grantedEntries.size(), grantedScrollOffset + MAX_ROWS);
         for (int i = grantedScrollOffset; i < gEnd; i++) {
             GrantedEntry entry = grantedEntries.get(i);
@@ -245,9 +247,28 @@ public class PermissionScreen extends Screen {
 
             // Permission badges
             int bx = pl + 170;
-            if (entry.hasUse)        bx = drawBadge(g, bx, ty, "USE",  0xFF1A4A2A);
-            if (entry.hasViewCamera) bx = drawBadge(g, bx, ty, "CAM",  0xFF1A2A5A);
-            if (entry.hasBreak)           drawBadge(g, bx, ty, "BRK",  0xFF5A1A1A);
+            if (entry.hasUse) {
+                int w = font.width("USE") + 6;
+                if (mx >= bx && mx < bx + w && my >= ty - 1 && my < ty + 9)
+                    hoveredTooltip = "USE: can teleport through";
+                bx = drawBadge(g, bx, ty, "USE", 0xFF44BB55);
+            }
+            if (entry.hasViewCamera) {
+                int w = font.width("CAM") + 6;
+                if (mx >= bx && mx < bx + w && my >= ty - 1 && my < ty + 9)
+                    hoveredTooltip = "CAM: can view camera";
+                bx = drawBadge(g, bx, ty, "CAM", 0xFF5588FF);
+            }
+            if (entry.hasBreak) {
+                int w = font.width("BRK") + 6;
+                if (mx >= bx && mx < bx + w && my >= ty - 1 && my < ty + 9)
+                    hoveredTooltip = "BRK: can break";
+                drawBadge(g, bx, ty, "BRK", 0xFFFF6666);
+            }
+        }
+
+        if (hoveredTooltip != null) {
+            g.renderTooltip(font, net.minecraft.network.chat.Component.literal(hoveredTooltip), mx, my);
         }
     }
 

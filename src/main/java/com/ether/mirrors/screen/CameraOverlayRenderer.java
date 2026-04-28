@@ -19,6 +19,8 @@ public class CameraOverlayRenderer {
     private static volatile double signalStrength = 1.0;
 
     private static final java.util.Random STATIC_RANDOM = new java.util.Random();
+    /** Reseed STATIC_RANDOM every 100 ms (~10 Hz) so static tiles don't animate at 60 fps. */
+    private static long lastStaticSeedMs = 0L;
 
     public static void startCameraView(String playerName, double signal) {
         cameraViewActive = true;
@@ -103,7 +105,13 @@ public class CameraOverlayRenderer {
             g.drawCenteredString(mc.font, "Signal Lost", W / 2, by, UITheme.SIGNAL_DEAD);
         } else if (signalStrength < staticThreshold) {
             double intensity = (staticThreshold - signalStrength) / staticThreshold;
-            int tileCount = (int)(intensity * 200);
+            // Reseed at ~10 Hz so tiles change visibly but don't animate at 60 fps
+            long nowMs = System.currentTimeMillis();
+            if (nowMs - lastStaticSeedMs >= 100L) {
+                STATIC_RANDOM.setSeed(nowMs / 100);
+                lastStaticSeedMs = nowMs;
+            }
+            int tileCount = (int)(intensity * 60); // cap at 60 tiles (was 200)
             for (int i = 0; i < tileCount; i++) {
                 int x = STATIC_RANDOM.nextInt(Math.max(1, W - 3));
                 int y = STATIC_RANDOM.nextInt(Math.max(1, H - 3));

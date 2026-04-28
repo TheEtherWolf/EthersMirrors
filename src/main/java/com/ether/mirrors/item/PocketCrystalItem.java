@@ -40,5 +40,6 @@ public class PocketCrystalItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.literal("Expands your pocket dimension by +16 blocks").withStyle(ChatFormatting.AQUA));
         tooltip.add(Component.literal("Use inside your pocket dimension").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.literal("Consumed on use.").withStyle(ChatFormatting.GRAY));
     }
 }

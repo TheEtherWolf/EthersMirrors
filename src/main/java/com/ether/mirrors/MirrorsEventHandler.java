@@ -510,6 +510,11 @@ public class MirrorsEventHandler {
 
         serverPlayer.displayClientMessage(
                 Component.literal("Mirror Shard bound to: " + mirrorName), true);
+
+        // Sound feedback on successful bind
+        serverPlayer.level().playSound(null, masterPos,
+                net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.5f);
     }
 
     /**

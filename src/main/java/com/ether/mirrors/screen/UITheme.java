@@ -26,7 +26,7 @@ public final class UITheme {
     public static final int TEXT_GOLD       = 0xFFD4AF37;
     public static final int TEXT_LAVENDER   = 0xFFAA88FF;
     public static final int TEXT_WHITE      = 0xFFE8E8F0;
-    public static final int TEXT_MUTED      = 0xFF77778A;
+    public static final int TEXT_MUTED      = 0xFF9999AA;
     public static final int TEXT_OWN        = 0xFF55FF88;   // own mirror — mint green
     public static final int TEXT_OTHER      = 0xFF55CCFF;   // others' — sky blue
 

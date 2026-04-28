@@ -53,7 +53,7 @@ public class MirrorNamingScreen extends Screen {
         // Styled EditBox
         this.nameField = new EditBox(this.font, cx - 120, pt + 42, 240, 18,
                 Component.literal("Mirror Name"));
-        this.nameField.setMaxLength(48);
+        this.nameField.setMaxLength(32);
         this.nameField.setValue(defaultName);
         this.nameField.setHint(Component.literal("Enter a name..."));
         this.nameField.setBordered(false);
@@ -123,6 +123,12 @@ public class MirrorNamingScreen extends Screen {
 
         // Hint label
         g.drawString(font, "Name:", fx + 2, fy - 10, UITheme.TEXT_MUTED, false);
+
+        // Character counter
+        int charCount = nameField != null ? nameField.getValue().length() : 0;
+        String counter = charCount + " / 32";
+        int counterColor = charCount >= 32 ? UITheme.SIGNAL_DEAD : UITheme.TEXT_MUTED;
+        g.drawString(font, counter, fx + 242 - font.width(counter), fy - 10, counterColor, false);
 
         super.render(g, mouseX, mouseY, partial);
     }

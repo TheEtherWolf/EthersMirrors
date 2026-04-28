@@ -27,6 +27,7 @@ public class MirrorCallScreen extends Screen {
     private Mode mode;
     private final String otherName;
     private final UUID callId;
+    private final long openTimeMs = System.currentTimeMillis();
 
     public MirrorCallScreen(Mode mode, String otherName, UUID callId) {
         super(Component.literal("Mirror Call"));
@@ -110,6 +111,14 @@ public class MirrorCallScreen extends Screen {
             g.drawCenteredString(font, "Incoming Mirror Call", cx, pt + 4, UITheme.TEXT_MUTED);
             g.drawCenteredString(font, "* " + otherName + " *", cx, pt + 14, UITheme.TEXT_GOLD);
             g.drawCenteredString(font, "is calling you", cx, pt + 36, UITheme.TEXT_LAVENDER);
+            // Countdown timer
+            int timeoutSecs = com.ether.mirrors.MirrorsConfig.CALL_TIMEOUT_SECONDS.get();
+            long remaining = (openTimeMs + timeoutSecs * 1000L) - System.currentTimeMillis();
+            if (remaining > 0) {
+                int secs = (int)(remaining / 1000) + 1;
+                g.drawCenteredString(font, "Expires in " + secs + "s", cx, pt + 48,
+                        UITheme.withAlpha(UITheme.TEXT_MUTED, 0xAA));
+            }
         } else if (mode == Mode.OUTGOING) {
             g.drawCenteredString(font, "Calling...", cx, pt + 4, UITheme.TEXT_MUTED);
             g.drawCenteredString(font, "* " + otherName + " *", cx, pt + 14, UITheme.TEXT_GOLD);
