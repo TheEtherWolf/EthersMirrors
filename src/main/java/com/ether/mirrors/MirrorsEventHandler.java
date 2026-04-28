@@ -10,12 +10,16 @@ import com.ether.mirrors.data.PermissionData;
 import com.ether.mirrors.data.PocketDimensionData;
 import com.ether.mirrors.init.MirrorsItems;
 import com.ether.mirrors.network.MirrorsNetwork;
+import com.ether.mirrors.update.UpdateManager;
 import com.ether.mirrors.util.MultiblockHelper;
 import com.ether.mirrors.voicechat.MirrorCallManager;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -151,6 +155,43 @@ public class MirrorsEventHandler {
         }
         // Sync mirror waypoints to Xaero's Minimap (if present)
         MirrorsNetwork.sendWaypointSync(serverPlayer);
+
+        // Notify about a downloaded update — shown to all players so everyone knows to restart
+        if (UpdateManager.getStatus() == UpdateManager.Status.READY_RESTART) {
+            sendUpdateNotification(serverPlayer);
+        }
+    }
+
+    private static void sendUpdateNotification(ServerPlayer player) {
+        String ver = UpdateManager.getLatestVersion();
+        String url  = UpdateManager.getReleasesPage();
+
+        // Line 1: header
+        MutableComponent header = Component.literal("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                .withStyle(ChatFormatting.DARK_AQUA);
+
+        // Line 2: "Ether's Mirrors  vX.X.X  is ready!"
+        MutableComponent msg = Component.literal(" ✦ Ether's Mirrors ")
+                .withStyle(ChatFormatting.AQUA)
+                .append(Component.literal("v" + ver).withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD))
+                .append(Component.literal(" has been downloaded!").withStyle(ChatFormatting.AQUA));
+
+        // Line 3: clickable restart hint
+        MutableComponent hint = Component.literal(" ► Restart to apply  ")
+                .withStyle(ChatFormatting.GREEN)
+                .append(Component.literal("[View Release Notes]")
+                        .withStyle(style -> style
+                                .withColor(ChatFormatting.GOLD)
+                                .withUnderlined(true)
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                                        net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                                        Component.literal("Open GitHub release page")))));
+
+        player.sendSystemMessage(header);
+        player.sendSystemMessage(msg);
+        player.sendSystemMessage(hint);
+        player.sendSystemMessage(header);
     }
 
     /**

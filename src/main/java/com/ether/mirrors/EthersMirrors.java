@@ -9,7 +9,9 @@ import com.ether.mirrors.init.MirrorsRecipes;
 import com.ether.mirrors.init.MirrorsSounds;
 import com.ether.mirrors.init.MirrorsTabs;
 import com.ether.mirrors.network.MirrorsNetwork;
+import com.ether.mirrors.update.UpdateManager;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -21,6 +23,12 @@ public class EthersMirrors {
 
     public static final String MOD_ID = "ethersmirrors";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+
+    /** Current mod version, read from the JAR manifest — stays in sync with gradle.properties automatically. */
+    public static final String VERSION = ModList.get()
+            .getModContainerById(MOD_ID)
+            .map(c -> c.getModInfo().getVersion().toString())
+            .orElse("0.0.0");
 
     public EthersMirrors() {
         var modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -41,7 +49,9 @@ public class EthersMirrors {
 
         MinecraftForge.EVENT_BUS.register(this);
 
-        LOGGER.info("Ether's Mirrors initialized");
+        UpdateManager.init();
+
+        LOGGER.info("Ether's Mirrors initialized (v{})", VERSION);
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
