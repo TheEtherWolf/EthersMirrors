@@ -1,0 +1,111 @@
+# EthersMirrors — Design Handoff
+
+This file keeps Claude Code (CC) and Claude Design (CD) in sync.
+Update it after every screen iteration.
+
+---
+
+## Workflow
+
+1. **CC** describes what's needed → prompts **CD**
+2. **CD** produces an HTML prototype bundle
+3. **CC** fetches the bundle URL, extracts it, implements in Java (Minecraft Forge 1.20.1)
+4. **CC** builds, deploys, commits, pushes
+5. User tests in-game, feeds back to CD or CC
+
+**Key constraints CC always enforces:**
+- Pixel rendering only — `GuiGraphics.fill`, `drawString`, `drawCenteredString`
+- No CSS/HTML in runtime — all animations via `System.currentTimeMillis()`
+- Panel width locked at **460px** across all screens
+- Shared chrome: `UITheme`, `MirrorButton` factory methods
+- No AI attribution in commits, ever
+
+---
+
+## Screen Status
+
+| # | Screen | CD Version | CC Status | Notes |
+|---|--------|-----------|-----------|-------|
+| 01 | `MirrorSelectionScreen` | v2 | **Shipped** `190f01f` | v2 full rewrite |
+| 02 | `MirrorCallScreen` | v1 | **Shipped** `1134c4f` | INCOMING/OUTGOING/ACTIVE states |
+| 03 | `PermissionScreen` | — | Not started | Next candidate |
+| 04 | `MirrorManagementScreen` | — | Exists (legacy) | Needs CD pass |
+| 05 | `PocketExpansionScreen` | — | Exists (legacy) | Needs CD pass |
+| 06 | `MirrorNamingScreen` | — | Exists (legacy) | Needs CD pass |
+
+---
+
+## MirrorSelectionScreen v2 — What was built
+
+**Panel:** 460×330px, 6 tabs (FAV / ALL / RECENT / NEARBY / CONTEXT / SEARCH)
+
+**Key features:**
+- Default tab = RECENT (falls back to ALL if empty)
+- Selected row: dark green fill + inset border + 2px gold left tab
+- Inspector strip (36px): shows mirror name, coords, tier on selection
+- Sort chip: cycles Name / Signal / Dimension (3 modes)
+- Per-tab empty states with unique glyphs + messages
+- Scroll gutter with track + thumb, arrow buttons
+- Context mode pills: TELEPORT / CALL / POCKET / WARP switch entire screen behavior
+- Footer: PERMISSIONS (ghost) + CLOSE (gold)
+
+**Column grid** (content=436px, 1fr=166px):
+```
+IDX=10  NAME=34  DIM=206  SIG=300  ACT=366  STAR=428
+```
+
+---
+
+## MirrorCallScreen v1 — What was built
+
+**Panel:** 460×172px, centered vertically (partial screen dim 0x88010008)
+
+**States:**
+- `INCOMING` — pulsing square rings on glyph box + depleting 48-dot countdown ring
+- `OUTGOING` — spinning dashed perimeter on glyph box + bouncing-dot ringing indicator
+- `ACTIVE` — static glyph + "CONNECTED · m:ss" footer
+
+**Glyph box:** 64×64px dark box, inner+outer borders
+- Incoming: 3 expanding square outlines, 1600ms period, offset by period/3 each
+- Outgoing: 2 bright 14px dashes sweeping clockwise along perimeter, 4000ms period
+
+**Countdown ring:** 48 dots at r=26, depleting by `remaining/timeoutMs`
+- Teal >50%, Gold 20–50%, Red <20%
+
+**Keyboard:** ENTER answers INCOMING, ESC blocked during ACTIVE
+
+**Data note:** `mirrorName`, `dimensionName`, `signalStrength` are nullable — packet
+changes needed to populate them (future pass).
+
+---
+
+## What to tell CD next
+
+When prompting CD for the next screen, include:
+
+> "This is for a Minecraft mod GUI rendered in pure Java pixel ops (no CSS at runtime).
+> Panel width is always 460px. Use the same header chrome as MirrorSelectionScreen:
+> dark panel background, 32px header with mode pill left + title center + close right,
+> teal/gold/purple/red accent palette, `MirrorButton` rounded pill buttons.
+> Animate with time-based phases only (no CSS transitions). Output as a self-contained
+> HTML prototype I can preview."
+
+Then describe the specific screen.
+
+---
+
+## Palette reference (CSS → Java ARGB)
+
+| Role | CSS | Java |
+|------|-----|------|
+| Panel bg | `#0D0F14` | `0xFF0D0F14` |
+| Header bg | `#13161E` | `0xFF13161E` |
+| Border dim | `rgba(255,255,255,0.08)` | `0x14FFFFFF` |
+| Border bright | `rgba(255,255,255,0.18)` | `0x2EFFFFFF` |
+| Teal accent | `#00D4C8` | `0xFF00D4C8` |
+| Gold accent | `#F5C842` | `0xFFF5C842` |
+| Purple accent | `#9B7FE8` | `0xFF9B7FE8` |
+| Red accent | `#E85F5F` | `0xFFE85F5F` |
+| Row selected | `rgba(170,85,255,0.28)` | `0x47AA55FF` |
+| Text primary | `#E8EAF0` | `0xFFE8EAF0` |
+| Text muted | `rgba(232,234,240,0.45)` | `0x72E8EAF0` |
