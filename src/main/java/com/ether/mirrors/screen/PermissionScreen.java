@@ -3,6 +3,7 @@ package com.ether.mirrors.screen;
 import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ServerboundPermissionRequestPacket;
 import com.ether.mirrors.network.packets.ServerboundPermissionResponsePacket;
+import com.ether.mirrors.network.packets.ServerboundSetPermissionLevelPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -303,7 +304,8 @@ public class PermissionScreen extends Screen {
                     Component.literal(TIER_LABELS[tier]),
                     b -> {
                         captured.permLevel = t;
-                        // TODO: send a SetPermissionLevel packet once the server-side handler is implemented
+                        MirrorsNetwork.sendToServer(
+                                new ServerboundSetPermissionLevelPacket(captured.playerUUID, t));
                         rebuildUI();
                     },
                     bdrColor, textColor));

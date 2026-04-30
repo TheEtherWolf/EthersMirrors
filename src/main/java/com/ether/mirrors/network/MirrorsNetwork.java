@@ -257,6 +257,12 @@ public class MirrorsNetwork {
                 ServerboundPickUpMirrorPacket::encode, ServerboundPickUpMirrorPacket::decode,
                 ServerboundPickUpMirrorPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // Permission ladder (PermissionScreen MY NETWORK tab)
+        CHANNEL.registerMessage(id++, ServerboundSetPermissionLevelPacket.class,
+                ServerboundSetPermissionLevelPacket::encode, ServerboundSetPermissionLevelPacket::decode,
+                ServerboundSetPermissionLevelPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     /**
