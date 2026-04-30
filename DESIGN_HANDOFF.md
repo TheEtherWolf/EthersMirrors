@@ -28,7 +28,7 @@ Update it after every screen iteration.
 |---|--------|-----------|-----------|-------|
 | 01 | `MirrorSelectionScreen` | v2 | **Shipped** `190f01f` | v2 full rewrite |
 | 02 | `MirrorCallScreen` | v2 | **Shipped** `431e69d` | Skin face + rune segments + green corner ticks |
-| 03 | `PermissionScreen` | — | Not started | Next candidate |
+| 03 | `PermissionScreen` | v1 | **Shipped** `277325b` | 3-tab, ladder, modal; needs SetPermissionLevel packet |
 | 04 | `MirrorManagementScreen` | — | Exists (legacy) | Needs CD pass |
 | 05 | `PocketExpansionScreen` | — | Exists (legacy) | Needs CD pass |
 | 06 | `MirrorNamingScreen` | — | Exists (legacy) | Needs CD pass |
@@ -79,6 +79,22 @@ IDX=10  NAME=34  DIM=206  SIG=300  ACT=366  STAR=428
 
 **Data note:** `mirrorName`, `dimensionName`, `signalStrength` are nullable — packet
 changes needed to populate them (future pass).
+
+---
+
+## PermissionScreen v1 — What was built
+
+**Panel:** 460×(variable)px, 3 tabs (MY NETWORK / PLAYERS / REQUESTS)
+
+**Key features:**
+- MY NETWORK tab: lists all players with granted access; 4-tier ladder pills (NONE/VIEW/CALL/ENTER); mini 16×16 hash-palette faces; × remove button sends `ServerboundPermissionResponsePacket.revoke()`
+- PLAYERS tab: online player list with expand-to-add; clicking a player row grants USE+VIEW_CAMERA
+- REQUESTS tab: pending access requests; APPROVE sends `(uuid, true, FLAG_USE|FLAG_VIEW_CAMERA)`; DENY sends `(uuid, false, 0)`
+- Privacy chip top-right: cycles default permission level 0→1→2→3→0
+- `PermissionRequestModal`: live incoming request overlay, 460×140px; 28s auto-deny countdown; pulse rings + 32×32 skin face; DENY(ESC) / APPROVE(ENTER)
+- `ClientboundPermissionNotifyPacket` now opens modal instead of action bar toast
+
+**Known gap:** clicking ladder pills on MY NETWORK rows only updates local state — a `ServerboundSetPermissionLevelPacket` is needed to persist the change server-side (marked TODO in code).
 
 ---
 
