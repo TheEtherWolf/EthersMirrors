@@ -1,8 +1,8 @@
 package com.ether.mirrors.network.packets;
 
+import com.ether.mirrors.screen.PermissionRequestModal;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.UUID;
@@ -29,11 +29,9 @@ public class ClientboundPermissionNotifyPacket {
 
     public static void handle(ClientboundPermissionNotifyPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            if (Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.displayClientMessage(
-                        Component.literal("\u2654 " + msg.requesterName + " wants mirror access — open your mirror to respond."),
-                        true  // action bar — visible over HUD, not scrolled away in chat
-                );
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                mc.setScreen(new PermissionRequestModal(msg.requesterName, msg.requesterUUID));
             }
         });
         ctx.get().setPacketHandled(true);
