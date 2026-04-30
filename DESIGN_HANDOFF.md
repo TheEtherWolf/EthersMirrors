@@ -27,7 +27,7 @@ Update it after every screen iteration.
 | # | Screen | CD Version | CC Status | Notes |
 |---|--------|-----------|-----------|-------|
 | 01 | `MirrorSelectionScreen` | v2 | **Shipped** `190f01f` | v2 full rewrite |
-| 02 | `MirrorCallScreen` | v1 | **Shipped** `1134c4f` | INCOMING/OUTGOING/ACTIVE states |
+| 02 | `MirrorCallScreen` | v2 | **Shipped** `431e69d` | Skin face + rune segments + green corner ticks |
 | 03 | `PermissionScreen` | — | Not started | Next candidate |
 | 04 | `MirrorManagementScreen` | — | Exists (legacy) | Needs CD pass |
 | 05 | `PocketExpansionScreen` | — | Exists (legacy) | Needs CD pass |
@@ -56,21 +56,24 @@ IDX=10  NAME=34  DIM=206  SIG=300  ACT=366  STAR=428
 
 ---
 
-## MirrorCallScreen v1 — What was built
+## MirrorCallScreen v2 — What was built
 
 **Panel:** 460×172px, centered vertically (partial screen dim 0x88010008)
 
 **States:**
-- `INCOMING` — pulsing square rings on glyph box + depleting 48-dot countdown ring
+- `INCOMING` — pulse rings on glyph box + 8-segment rune countdown
 - `OUTGOING` — spinning dashed perimeter on glyph box + bouncing-dot ringing indicator
-- `ACTIVE` — static glyph + "CONNECTED · m:ss" footer
+- `ACTIVE` — green corner ticks on glyph box + timer widget (elapsed + quality)
 
-**Glyph box:** 64×64px dark box, inner+outer borders
-- Incoming: 3 expanding square outlines, 1600ms period, offset by period/3 each
-- Outgoing: 2 bright 14px dashes sweeping clockwise along perimeter, 4000ms period
+**Glyph box:** 64×64px, per-state tinted bg, player skin face 32×32 centred
+- Face: `PlayerInfo.getSkinLocation()` blitted at 4× via pose scale; Steve fallback
+- Incoming: 3 expanding square outline rings, 1600ms, offset by period/3
+- Outgoing: 2 bright 14px dashes sweeping clockwise, 4000ms
+- Active: green L-shaped 5px corner ticks (no rings)
 
-**Countdown ring:** 48 dots at r=26, depleting by `remaining/timeoutMs`
-- Teal >50%, Gold 20–50%, Red <20%
+**Rune segment countdown:** 8 arc segments, r=26, stroke 6px (r 23–28), 45° apart, 30.8° each
+- Depletes from the end (ceil(8 × fraction) segments lit)
+- Teal >50%, Gold 25–50%, Red ≤25%; last 2 segments pulse at 0.8s when red
 
 **Keyboard:** ENTER answers INCOMING, ESC blocked during ACTIVE
 
