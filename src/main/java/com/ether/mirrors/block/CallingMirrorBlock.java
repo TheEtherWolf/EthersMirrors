@@ -5,6 +5,7 @@ import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ServerboundOpenMirrorPacket;
 import com.ether.mirrors.network.packets.ServerboundOpenMirrorManagementPacket;
 import com.ether.mirrors.screen.MirrorNamingScreen;
+import com.ether.mirrors.screen.MirrorPlacementScreen;
 import com.ether.mirrors.util.MirrorTier;
 import com.ether.mirrors.util.MirrorType;
 import com.ether.mirrors.util.MultiblockHelper;
@@ -41,7 +42,10 @@ public class CallingMirrorBlock extends MirrorBlock {
             if (level.getBlockEntity(masterPos) instanceof MirrorBlockEntity mirrorBE) {
                 if (!mirrorBE.isActivated()) {
                     if (mirrorBE.isOwner(player)) {
-                        MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundActivateMirrorPacket(masterPos));
+                        net.minecraft.core.BlockPos bp = masterPos;
+                        String dimStr = level.dimension().location().toString();
+                        Minecraft.getInstance().setScreen(new MirrorPlacementScreen(
+                                bp, "calling", dimStr, bp.getX(), bp.getY(), bp.getZ()));
                     }
                     return InteractionResult.SUCCESS;
                 }

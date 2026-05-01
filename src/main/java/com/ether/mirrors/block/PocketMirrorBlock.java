@@ -9,6 +9,7 @@ import com.ether.mirrors.MirrorsConfig;
 import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ServerboundOpenMirrorManagementPacket;
 import com.ether.mirrors.network.packets.ServerboundOpenMirrorPacket;
+import net.minecraft.client.Minecraft;
 import com.ether.mirrors.util.MirrorTier;
 import com.ether.mirrors.util.MirrorType;
 import com.ether.mirrors.util.MultiblockHelper;
@@ -54,11 +55,14 @@ public class PocketMirrorBlock extends MirrorBlock {
                 return InteractionResult.PASS;
             }
 
-            // Activation gate — owner must activate on first use
+            // Activation gate — owner must inscribe on first use
             if (level.getBlockEntity(masterPos) instanceof MirrorBlockEntity mirrorBE) {
                 if (!mirrorBE.isActivated()) {
                     if (mirrorBE.isOwner(player)) {
-                        MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundActivateMirrorPacket(masterPos));
+                        net.minecraft.core.BlockPos bp = masterPos;
+                        String dimStr = level.dimension().location().toString();
+                        net.minecraft.client.Minecraft.getInstance().setScreen(new com.ether.mirrors.screen.MirrorPlacementScreen(
+                                bp, "pocket", dimStr, bp.getX(), bp.getY(), bp.getZ()));
                     }
                     return InteractionResult.SUCCESS;
                 }

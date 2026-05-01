@@ -284,6 +284,17 @@ public class MirrorsNetwork {
                 ServerboundDeleteCallHistoryEntryPacket::encode, ServerboundDeleteCallHistoryEntryPacket::decode,
                 ServerboundDeleteCallHistoryEntryPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // Mirror placement / inscribe screen
+        CHANNEL.registerMessage(id++, ClientboundOpenMirrorPlacementPacket.class,
+                ClientboundOpenMirrorPlacementPacket::encode, ClientboundOpenMirrorPlacementPacket::decode,
+                ClientboundOpenMirrorPlacementPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        CHANNEL.registerMessage(id++, ServerboundInscribeMirrorPacket.class,
+                ServerboundInscribeMirrorPacket::encode, ServerboundInscribeMirrorPacket::decode,
+                ServerboundInscribeMirrorPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     /**

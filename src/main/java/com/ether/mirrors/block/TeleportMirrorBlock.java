@@ -5,6 +5,7 @@ import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ServerboundOpenMirrorPacket;
 import com.ether.mirrors.network.packets.ServerboundOpenMirrorManagementPacket;
 import com.ether.mirrors.screen.MirrorNamingScreen;
+import com.ether.mirrors.screen.MirrorPlacementScreen;
 import com.ether.mirrors.util.MirrorTier;
 import com.ether.mirrors.util.MirrorType;
 import com.ether.mirrors.util.MultiblockHelper;
@@ -39,14 +40,17 @@ public class TeleportMirrorBlock extends MirrorBlock {
             }
 
             if (level.getBlockEntity(masterPos) instanceof MirrorBlockEntity mirrorBE) {
-                // Not yet activated — owner must activate on first use
+                // Not yet inscribed — open placement screen for owner
                 if (!mirrorBE.isActivated()) {
                     if (mirrorBE.isOwner(player)) {
-                        MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundActivateMirrorPacket(masterPos));
+                        net.minecraft.core.BlockPos bp = masterPos;
+                        String dimStr = level.dimension().location().toString();
+                        Minecraft.getInstance().setScreen(new MirrorPlacementScreen(
+                                bp, "teleport", dimStr, bp.getX(), bp.getY(), bp.getZ()));
                     }
                     return InteractionResult.SUCCESS;
                 }
-                // Activated but unnamed — show naming screen for owner
+                // Activated but unnamed — show naming screen for owner (legacy fallback)
                 if (!mirrorBE.hasCustomName() && mirrorBE.isOwner(player)) {
                     Minecraft.getInstance().setScreen(new MirrorNamingScreen(masterPos, mirrorBE.getDisplayName()));
                     return InteractionResult.SUCCESS;

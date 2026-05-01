@@ -71,16 +71,20 @@ public class BeaconMirrorBlock extends MirrorBlock {
                 return InteractionResult.PASS;
             }
 
-            // Activation gate — owner must activate on first use
+            // Activation gate — owner must inscribe on first use
             if (level.getBlockEntity(masterPos) instanceof MirrorBlockEntity mirrorBE) {
                 if (!mirrorBE.isActivated()) {
                     if (mirrorBE.isOwner(player)) {
-                        MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundActivateMirrorPacket(masterPos));
+                        net.minecraft.core.BlockPos bp = masterPos;
+                        String dimStr = level.dimension().location().toString();
+                        net.minecraft.client.Minecraft.getInstance().setScreen(
+                                new com.ether.mirrors.screen.MirrorPlacementScreen(
+                                        bp, "beacon", dimStr, bp.getX(), bp.getY(), bp.getZ()));
                     }
                     return InteractionResult.SUCCESS;
                 }
 
-                // Naming gate — owner must name beacon before it's usable
+                // Naming gate — owner must name beacon before it's usable (legacy fallback)
                 if (mirrorBE.isOwner(player) && (mirrorBE.getMirrorName() == null || mirrorBE.getMirrorName().isEmpty())) {
                     net.minecraft.client.Minecraft.getInstance().setScreen(
                             new com.ether.mirrors.screen.MirrorNamingScreen(masterPos, null, false));

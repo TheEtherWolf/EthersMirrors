@@ -32,6 +32,8 @@ public class MirrorBlockEntity extends BlockEntity {
     private int pulseTicks = 0;
     private int dyeColor = -1; // -1 = no dye, 0-15 = DyeColor ordinal
     private boolean activated = false; // must be activated by owner before anyone can use it
+    private int sigilIndex = 0; // 0-11, indexes MirrorPlacementScreen.SIGILS
+    private String description = ""; // optional mirror description, max 128 chars
 
     public MirrorBlockEntity(BlockPos pos, BlockState state, MirrorTier tier, MirrorType type) {
         super(MirrorsBlockEntities.MIRROR_BLOCK_ENTITY.get(), pos, state);
@@ -150,6 +152,12 @@ public class MirrorBlockEntity extends BlockEntity {
     public int getDyeColor() { return dyeColor; }
     public void setDyeColor(int dyeColor) { this.dyeColor = dyeColor; this.setChanged(); }
 
+    public int getSigilIndex() { return sigilIndex; }
+    public void setSigilIndex(int idx) { this.sigilIndex = Math.max(0, Math.min(11, idx)); setChanged(); }
+
+    public String getDescription() { return description; }
+    public void setDescription(String desc) { this.description = desc != null ? desc : ""; setChanged(); }
+
     public void serverTick() {
         if (pulseTicks > 0) {
             pulseTicks--;
@@ -185,6 +193,8 @@ public class MirrorBlockEntity extends BlockEntity {
         tag.putInt("PulseTicks", pulseTicks);
         if (dyeColor >= 0) tag.putInt("DyeColor", dyeColor);
         tag.putBoolean("Activated", activated);
+        tag.putInt("SigilIndex", sigilIndex);
+        tag.putString("Description", description);
     }
 
     @Override
@@ -240,6 +250,8 @@ public class MirrorBlockEntity extends BlockEntity {
         }
         if (tag.contains("DyeColor")) dyeColor = tag.getInt("DyeColor");
         if (tag.contains("Activated")) activated = tag.getBoolean("Activated");
+        if (tag.contains("SigilIndex")) sigilIndex = tag.getInt("SigilIndex");
+        if (tag.contains("Description")) description = tag.getString("Description");
     }
 
     // Client sync methods
@@ -261,6 +273,8 @@ public class MirrorBlockEntity extends BlockEntity {
         tag.putInt("PulseTicks", pulseTicks);
         if (dyeColor >= 0) tag.putInt("DyeColor", dyeColor);
         tag.putBoolean("Activated", activated);
+        tag.putInt("SigilIndex", sigilIndex);
+        tag.putString("Description", description);
         return tag;
     }
 

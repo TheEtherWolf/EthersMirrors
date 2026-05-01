@@ -181,6 +181,13 @@ public abstract class MirrorBlock extends BaseEntityBlock {
                             com.ether.mirrors.network.MirrorsNetwork.sendWaypointSync(sp);
                         }
                     }
+                    // Open placement/setup screen for the placing player
+                    if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                        String dimStr = serverLevel.dimension().location().toString();
+                        com.ether.mirrors.network.MirrorsNetwork.sendToPlayer(sp,
+                                new com.ether.mirrors.network.packets.ClientboundOpenMirrorPlacementPacket(
+                                        pos, type.getName(), dimStr, pos.getX(), pos.getY(), pos.getZ()));
+                    }
                 }
             }
         }
