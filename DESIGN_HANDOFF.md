@@ -28,7 +28,8 @@ Update it after every screen iteration.
 |---|--------|-----------|-----------|-------|
 | 01 | `MirrorSelectionScreen` | v2 | **Shipped** `190f01f` | v2 full rewrite |
 | 02 | `MirrorCallScreen` | v2 | **Shipped** `431e69d` | Skin face + rune segments + green corner ticks |
-| 03 | `PermissionScreen` | v1 | **Shipped** `277325b` | 3-tab, ladder, modal; needs SetPermissionLevel packet |
+| 03 | `PermissionScreen` | v1 | **Shipped** `277325b` | 3-tab, ladder, modal; SetPermissionLevel wired `9f9b1b3` |
+| 04 | `CallHistoryScreen` | v1 | **Shipped** `76399b0` | Mixed feed; open via `ServerboundOpenCallHistoryPacket` |
 | 04 | `MirrorManagementScreen` | — | Exists (legacy) | Needs CD pass |
 | 05 | `PocketExpansionScreen` | — | Exists (legacy) | Needs CD pass |
 | 06 | `MirrorNamingScreen` | — | Exists (legacy) | Needs CD pass |
