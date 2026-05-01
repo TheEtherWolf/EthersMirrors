@@ -3,8 +3,11 @@ package com.ether.mirrors;
 import com.ether.mirrors.block.MirrorBlock;
 import com.ether.mirrors.block.MirrorMultiblockPart;
 import com.ether.mirrors.block.entity.MirrorBlockEntity;
+import com.ether.mirrors.client.MirrorsKeybindings;
 import com.ether.mirrors.item.MirrorUpgradeType;
+import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ClientCallState;
+import com.ether.mirrors.network.packets.ServerboundOpenCallHistoryPacket;
 import com.ether.mirrors.screen.CameraOverlayRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -42,6 +45,11 @@ public class MirrorsClientEvents {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || mc.isPaused()) return;
+
+        // M — Open Memory / Call History screen (only when no screen is open)
+        if (MirrorsKeybindings.OPEN_MEMORY.consumeClick() && mc.screen == null) {
+            MirrorsNetwork.sendToServer(new ServerboundOpenCallHistoryPacket());
+        }
 
         tickCounter++;
         if (tickCounter % 4 != 0) return; // Only every 4 ticks for performance
