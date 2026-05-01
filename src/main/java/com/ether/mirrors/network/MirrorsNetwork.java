@@ -263,6 +263,27 @@ public class MirrorsNetwork {
                 ServerboundSetPermissionLevelPacket::encode, ServerboundSetPermissionLevelPacket::decode,
                 ServerboundSetPermissionLevelPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // Call History screen
+        CHANNEL.registerMessage(id++, ServerboundOpenCallHistoryPacket.class,
+                ServerboundOpenCallHistoryPacket::encode, ServerboundOpenCallHistoryPacket::decode,
+                ServerboundOpenCallHistoryPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        CHANNEL.registerMessage(id++, ClientboundOpenCallHistoryPacket.class,
+                ClientboundOpenCallHistoryPacket::encode, ClientboundOpenCallHistoryPacket::decode,
+                ClientboundOpenCallHistoryPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        CHANNEL.registerMessage(id++, ServerboundClearCallHistoryPacket.class,
+                ServerboundClearCallHistoryPacket::encode, ServerboundClearCallHistoryPacket::decode,
+                ServerboundClearCallHistoryPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        CHANNEL.registerMessage(id++, ServerboundDeleteCallHistoryEntryPacket.class,
+                ServerboundDeleteCallHistoryEntryPacket::encode, ServerboundDeleteCallHistoryEntryPacket::decode,
+                ServerboundDeleteCallHistoryEntryPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     /**

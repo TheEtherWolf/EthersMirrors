@@ -1,5 +1,6 @@
 package com.ether.mirrors.network.packets;
 
+import com.ether.mirrors.data.CallLogData;
 import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.voicechat.MirrorCallManager;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,6 +40,22 @@ public class ServerboundCallEndPacket {
 
             UUID otherUUID = call.callerUUID.equals(player.getUUID()) ? call.calleeUUID : call.callerUUID;
             ServerPlayer otherPlayer = player.server.getPlayerList().getPlayer(otherUUID);
+
+            // Log call end with duration for both participants (only if call was connected)
+            if (call.getState() == MirrorCallManager.CallState.CONNECTED) {
+                CallLogData logData = CallLogData.get(player.server);
+                boolean playerWasCaller = call.callerUUID.equals(player.getUUID());
+                String otherName = otherPlayer != null
+                        ? otherPlayer.getGameProfile().getName()
+                        : otherUUID.toString();
+                String dimId = player.level().dimension().location().toString();
+                logData.recordCallEnd(player.getUUID(), msg.callId, playerWasCaller, otherName, otherUUID, dimId, false);
+                if (otherPlayer != null) {
+                    logData.recordCallEnd(otherPlayer.getUUID(), msg.callId, !playerWasCaller,
+                            player.getGameProfile().getName(), player.getUUID(),
+                            otherPlayer.level().dimension().location().toString(), true);
+                }
+            }
 
             callManager.endCall(msg.callId);
 

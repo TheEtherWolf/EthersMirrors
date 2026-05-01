@@ -1,5 +1,6 @@
 package com.ether.mirrors.network.packets;
 
+import com.ether.mirrors.data.CallLogData;
 import com.ether.mirrors.data.PermissionData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -71,6 +72,9 @@ public class ServerboundPermissionResponsePacket {
                 permData.revokePermission(grantor.getUUID(), msg.requesterUUID, PermissionData.PermissionLevel.BREAK);
 
                 ServerPlayer target = grantor.server.getPlayerList().getPlayer(msg.requesterUUID);
+                String revokeeName = target != null ? target.getGameProfile().getName() : msg.requesterUUID.toString();
+                CallLogData.get(grantor.server).recordPermissionRevoke(
+                        grantor.getUUID(), revokeeName, msg.requesterUUID);
                 if (target != null) {
                     target.displayClientMessage(
                             Component.literal(grantor.getGameProfile().getName() + " revoked your mirror access."), false);
@@ -107,6 +111,11 @@ public class ServerboundPermissionResponsePacket {
 
                 // Notify requester if online
                 ServerPlayer requester = grantor.server.getPlayerList().getPlayer(msg.requesterUUID);
+                String granteeName = requester != null ? requester.getGameProfile().getName() : msg.requesterUUID.toString();
+                String permLabel = (msg.permissionFlags & FLAG_BREAK) != 0 ? "ENTER"
+                        : (msg.permissionFlags & FLAG_USE) != 0 ? "CALL" : "VIEW";
+                CallLogData.get(grantor.server).recordPermissionGrant(
+                        grantor.getUUID(), granteeName, msg.requesterUUID, permLabel);
                 if (requester != null) {
                     requester.displayClientMessage(
                             Component.literal(grantor.getGameProfile().getName() + " granted you mirror access!"), false);

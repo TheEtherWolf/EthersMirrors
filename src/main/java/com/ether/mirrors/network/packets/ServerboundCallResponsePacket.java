@@ -1,5 +1,6 @@
 package com.ether.mirrors.network.packets;
 
+import com.ether.mirrors.data.CallLogData;
 import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.voicechat.MirrorCallManager;
 import net.minecraft.network.FriendlyByteBuf;
@@ -48,6 +49,11 @@ public class ServerboundCallResponsePacket {
                 if (caller != null && callee != null) {
                     callManager.acceptCall(msg.callId, caller, callee);
 
+                    // Log call connected for both participants
+                    CallLogData logData = CallLogData.get(caller.server);
+                    logData.recordCallConnect(msg.callId);
+                    // Persist connect time — actual entry written on call end
+
                     // Notify both players
                     MirrorsNetwork.sendToPlayer(caller, new ClientboundCallEstablishedPacket(call.callId, callee.getGameProfile().getName()));
                     MirrorsNetwork.sendToPlayer(callee, new ClientboundCallEstablishedPacket(call.callId, caller.getGameProfile().getName()));
@@ -71,7 +77,12 @@ public class ServerboundCallResponsePacket {
                 // Call declined — notify caller via packet so their call UI closes, then via message
                 ServerPlayer caller = responder.server.getPlayerList().getPlayer(call.callerUUID);
                 callManager.endCall(msg.callId, responder.server);
+                // Log declined for both parties
+                CallLogData logData = CallLogData.get(responder.server);
+                String callerName   = caller != null ? caller.getGameProfile().getName() : call.callerUUID.toString();
+                logData.recordDeclinedCall(responder.getUUID(), false, callerName, call.callerUUID);
                 if (caller != null) {
+                    logData.recordDeclinedCall(caller.getUUID(), true, responder.getGameProfile().getName(), responder.getUUID());
                     caller.displayClientMessage(Component.literal(responder.getGameProfile().getName() + " declined your call."), true);
                 }
             }

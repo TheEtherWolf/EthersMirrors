@@ -315,6 +315,12 @@ public class ServerboundTeleportRequestPacket {
             networkData.recordTeleport(player.getUUID(), sourceMirrorId);
             com.ether.mirrors.advancement.MirrorsTriggers.MIRROR_TELEPORTED.trigger(player);
 
+            // Log teleport to call history
+            com.ether.mirrors.data.CallLogData.get(player.server).recordTeleport(
+                    player.getUUID(), true,
+                    target.name != null ? target.name : "Mirror",
+                    target.dimension.location().toString());
+
             // If saveAsWarpTarget, store target mirrorId in source BE's upgradeData
             // Only the mirror owner can set/change the warp target
             if (msg.saveAsWarpTarget && !msg.isHandheld) {
