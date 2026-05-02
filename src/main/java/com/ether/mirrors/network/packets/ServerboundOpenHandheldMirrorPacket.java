@@ -34,12 +34,12 @@ public class ServerboundOpenHandheldMirrorPacket {
     }
 
     public static void encode(ServerboundOpenHandheldMirrorPacket msg, FriendlyByteBuf buf) {
-        buf.writeUtf(msg.tierName);
-        buf.writeUtf(msg.typeName);
+        buf.writeUtf(msg.tierName, 16);
+        buf.writeUtf(msg.typeName, 16);
     }
 
     public static ServerboundOpenHandheldMirrorPacket decode(FriendlyByteBuf buf) {
-        return new ServerboundOpenHandheldMirrorPacket(buf.readUtf(), buf.readUtf());
+        return new ServerboundOpenHandheldMirrorPacket(buf.readUtf(16), buf.readUtf(16));
     }
 
     public static void handle(ServerboundOpenHandheldMirrorPacket msg, Supplier<NetworkEvent.Context> ctx) {

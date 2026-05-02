@@ -38,6 +38,10 @@ public class ClientboundOpenCallHistoryPacket {
 
     public static ClientboundOpenCallHistoryPacket decode(FriendlyByteBuf buf) {
         int count = buf.readInt();
+        if (count < 0 || count > 10_000) {
+            throw new io.netty.handler.codec.DecoderException(
+                    "EthersMirrors: call history entry count out of bounds: " + count);
+        }
         List<CallLogData.LogEntry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             CallLogData.EventType type = CallLogData.EventType.fromId(buf.readByte() & 0xFF);

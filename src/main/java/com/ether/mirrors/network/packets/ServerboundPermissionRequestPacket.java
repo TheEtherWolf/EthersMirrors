@@ -18,7 +18,7 @@ public class ServerboundPermissionRequestPacket {
     }
 
     public static void encode(ServerboundPermissionRequestPacket msg, FriendlyByteBuf buf) {
-        buf.writeUtf(msg.targetPlayerName);
+        buf.writeUtf(msg.targetPlayerName, 16);
     }
 
     public static ServerboundPermissionRequestPacket decode(FriendlyByteBuf buf) {

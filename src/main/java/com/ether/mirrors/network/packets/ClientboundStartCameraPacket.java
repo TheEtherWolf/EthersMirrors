@@ -17,7 +17,7 @@ public class ClientboundStartCameraPacket {
     }
 
     public static void encode(ClientboundStartCameraPacket msg, FriendlyByteBuf buf) {
-        buf.writeUtf(msg.viewingPlayerName);
+        buf.writeUtf(msg.viewingPlayerName, 48);
         buf.writeDouble(msg.signalStrength);
     }
 
