@@ -89,8 +89,8 @@ public class MirrorTravelScreen extends Screen {
     // ── Phase drawing ─────────────────────────────────────────────────────────
 
     private void drawBaseOverlay(GuiGraphics g, int sw, int sh, int phase) {
-        // Semi-transparent base — game world remains visible beneath the effect
-        g.fill(0, 0, sw, sh, 0xA0000008);
+        // Opaque dark base — blocks game world, effects rendered on top
+        g.fill(0, 0, sw, sh, 0xF2000008);
 
         switch (phase) {
             case 0 -> { // Charge — deepening purple vignette
