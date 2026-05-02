@@ -286,7 +286,9 @@ public final class JourneyMapCompat {
             if (wp == null) return;
             Method m = method(wp.getClass(), "setColor", 1);
             if (m != null) m.invoke(wp, color);
-        } catch (Exception ignored) {}
+        } catch (Exception ex) {
+            EthersMirrors.LOGGER.debug("[EthersMirrors] JourneyMap recolor failed: {}", ex.getMessage());
+        }
     }
 
     private static Object findById(Object api, String id) {
