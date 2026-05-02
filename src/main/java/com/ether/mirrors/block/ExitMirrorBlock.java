@@ -52,7 +52,7 @@ public class ExitMirrorBlock extends Block {
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.CONSUME;
 
         // Sneak + right-click: open pocket expansion screen (owner only)
-        if (player.isShiftKeyDown()) {
+        if (player.isCrouching()) {
             PocketDimensionData pocketData = PocketDimensionData.get(serverPlayer.server);
             java.util.UUID pocketOwner = pocketData.getPocketOwnerForPlayer(serverPlayer.getUUID());
             if (pocketOwner != null && pocketOwner.equals(serverPlayer.getUUID())) {

@@ -12,6 +12,7 @@ import com.ether.mirrors.network.packets.ServerboundSetMirrorFolderPacket;
 import com.ether.mirrors.network.packets.ServerboundSetPocketThemePacket;
 import com.ether.mirrors.network.packets.ServerboundUpgradeMirrorTierPacket;
 import com.ether.mirrors.util.MirrorTier;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -293,6 +294,26 @@ public class MirrorManagementScreen extends Screen {
                             rebuildWidgets();
                         }
                     }));
+
+            // Online players — one-click allow/block
+            List<String> onlineNames = getOnlinePlayerNames();
+            int onlineRowY = blockFieldY + 24;
+            for (int i = 0; i < Math.min(onlineNames.size(), 5); i++) {
+                final String name = onlineNames.get(i);
+                int ry = onlineRowY + i * 16;
+                addRenderableWidget(MirrorButton.teal(pl + PANEL_W - 118, ry, 50, 13,
+                        Component.literal("Allow"), b -> {
+                            MirrorsNetwork.sendToServer(new ServerboundSetMirrorOverridePacket(mirrorId, name, "allow"));
+                            allowList.add(new ClientboundOpenMirrorManagementPacket.PlayerEntry(UUID.randomUUID(), name));
+                            rebuildWidgets();
+                        }));
+                addRenderableWidget(MirrorButton.red(pl + PANEL_W - 64, ry, 50, 13,
+                        Component.literal("Block"), b -> {
+                            MirrorsNetwork.sendToServer(new ServerboundSetMirrorOverridePacket(mirrorId, name, "block"));
+                            blockList.add(new ClientboundOpenMirrorManagementPacket.PlayerEntry(UUID.randomUUID(), name));
+                            rebuildWidgets();
+                        }));
+            }
         }
 
         // ── Tab 2: Info ────────────────────────────────────────────────────
@@ -490,6 +511,20 @@ public class MirrorManagementScreen extends Screen {
             g.fill(pl + 7, blockFieldY - 2, pl + 210, blockFieldY + 14, UITheme.BORDER_ACCENT);
             g.fill(pl + 8, blockFieldY - 1, pl + 209, blockFieldY + 13, 0xFF060022);
             g.drawString(font, "Block:", pl + 8, blockFieldY - 11, UITheme.TEXT_MUTED, false);
+
+            // Online player quick-add list
+            List<String> onlineNames = getOnlinePlayerNames();
+            int onlineRowY = blockFieldY + 24;
+            if (!onlineNames.isEmpty()) {
+                g.drawString(font, "Online \u2014 quick add:", pl + 8, onlineRowY - 9, UITheme.TEXT_MUTED, false);
+                for (int i = 0; i < Math.min(onlineNames.size(), 5); i++) {
+                    int ry = onlineRowY + i * 16;
+                    UITheme.drawRow(g, pl + 8, ry, pr - 8, ry + 13, i % 2 == 1, false);
+                    g.drawString(font, onlineNames.get(i), pl + 12, ry + 3, UITheme.TEXT_OWN, false);
+                }
+            } else {
+                g.drawString(font, "No other players online", pl + 8, onlineRowY, UITheme.withAlpha(UITheme.TEXT_MUTED, 0x88), false);
+            }
         }
 
         // ── Tab 2: Info ───────────────────────────────────────────────────
@@ -568,6 +603,18 @@ public class MirrorManagementScreen extends Screen {
         // Custom dimension: strip namespace and prettify
         String path = dim.contains(":") ? dim.substring(dim.indexOf(':') + 1) : dim;
         return cap(path.replace("_", " "));
+    }
+
+    private List<String> getOnlinePlayerNames() {
+        var conn = Minecraft.getInstance().getConnection();
+        if (conn == null) return List.of();
+        String self = Minecraft.getInstance().player != null
+                ? Minecraft.getInstance().player.getGameProfile().getName() : "";
+        return conn.getOnlinePlayers().stream()
+                .map(pi -> pi.getProfile().getName())
+                .filter(n -> n != null && !n.isEmpty() && !n.equals(self))
+                .limit(6)
+                .toList();
     }
 
     private static int getUpgradeSlotsForTier(String tierName) {

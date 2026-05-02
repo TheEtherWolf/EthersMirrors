@@ -39,9 +39,13 @@ public class MirrorTravelScreen extends Screen {
     @Override
     public void tick() {
         ticks++;
-        if (ticks >= TOTAL_TICKS) {
+        // Send teleport when charging completes — player is whisked away at phase boundary,
+        // phases 1-4 play out at the destination.
+        if (ticks == PHASE_START[1]) {
             MirrorsNetwork.sendToServer(
                     new ServerboundTeleportRequestPacket(destination.mirrorId, sourceMirrorPos, isHandheld));
+        }
+        if (ticks >= TOTAL_TICKS) {
             onClose();
         }
     }
@@ -52,11 +56,12 @@ public class MirrorTravelScreen extends Screen {
         int cx = sw / 2, cy = sh / 2;
         int phase = currentPhase();
 
-        // Opaque dark base
-        g.fill(0, 0, sw, sh, 0xF8000010);
-
-        // Vignette — always present
-        drawVignette(g, sw, sh);
+        // Phase 0 (charge): world stays visible — only the ring effects are drawn on top.
+        // Full overlay begins when the player has already been teleported (phase 1+).
+        if (phase > 0) {
+            g.fill(0, 0, sw, sh, 0xF8000010);
+            drawVignette(g, sw, sh);
+        }
 
         switch (phase) {
             case 0 -> { // Charge — rings expand outward, center glow grows

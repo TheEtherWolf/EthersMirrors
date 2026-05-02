@@ -39,15 +39,20 @@ public class ServerboundSetMirrorOverridePacket {
             com.ether.mirrors.data.MirrorNetworkData.MirrorEntry entry = networkData.getMirrorById(msg.mirrorId);
             if (entry == null || entry.ownerUUID == null || !entry.ownerUUID.equals(player.getUUID())) return;
 
-            // Resolve target player UUID — online players only (no profile cache fallback to prevent
-            // granting/revoking permissions for arbitrary players who never joined this server)
+            // Resolve target player UUID — check online first, then profile cache for offline players
+            UUID targetUUID;
             var online = player.server.getPlayerList().getPlayerByName(msg.targetPlayerName);
-            if (online == null) {
-                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                        "Player \"" + msg.targetPlayerName + "\" is not online."), true);
-                return;
+            if (online != null) {
+                targetUUID = online.getUUID();
+            } else {
+                var cached = player.server.getProfileCache().get(msg.targetPlayerName);
+                if (cached.isEmpty()) {
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                            "Player \"" + msg.targetPlayerName + "\" has not joined this server."), true);
+                    return;
+                }
+                targetUUID = cached.get().getId();
             }
-            UUID targetUUID = online.getUUID();
 
             // Cannot override yourself
             if (targetUUID.equals(player.getUUID())) {

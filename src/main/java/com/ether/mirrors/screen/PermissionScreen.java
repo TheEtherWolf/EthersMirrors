@@ -127,7 +127,13 @@ public class PermissionScreen extends Screen {
         { 0x73D4AF37, 0x669A7520 },  // ENTER
     };
 
-    private static final String[] TIER_LABELS = { "NONE", "VIEW", "CALL", "ENTER" };
+    private static final String[] TIER_LABELS   = { "NONE", "VIEW", "CALL", "ENTER" };
+    private static final String[] TIER_TOOLTIPS = {
+        "No access — cannot interact with your mirrors",
+        "Can see mirror through camera, but cannot teleport or call",
+        "Can call you through mirrors",
+        "Can teleport through your mirrors",
+    };
 
     // Privacy chip cycles: 0=LOCKED 1=VIEW 2=CALL 3=ENTER
     private static final String[] CHIP_GLYPHS  = { "\u25A0", "\u25D1", "\u25CE", "\u25C9" };
@@ -299,7 +305,7 @@ public class PermissionScreen extends Screen {
             boolean active = (e.permLevel == tier);
             int bdrColor = active ? TIER_ACTIVE[tier][1] : TIER_HINT[tier][1];
             int textColor = active ? TIER_ACTIVE[tier][2] : TIER_HINT[tier][0];
-            addRenderableWidget(MirrorButton.of(
+            MirrorButton pill = MirrorButton.of(
                     pillXs[tier], ry + 2, PILL_W, 18,
                     Component.literal(TIER_LABELS[tier]),
                     b -> {
@@ -308,7 +314,10 @@ public class PermissionScreen extends Screen {
                                 new ServerboundSetPermissionLevelPacket(captured.playerUUID, t));
                         rebuildUI();
                     },
-                    bdrColor, textColor));
+                    bdrColor, textColor);
+            pill.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    Component.literal(TIER_TOOLTIPS[tier])));
+            addRenderableWidget(pill);
         }
     }
 
