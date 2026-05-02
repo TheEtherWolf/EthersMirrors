@@ -307,7 +307,7 @@ public class MirrorSelectionScreen extends Screen {
                         Component.literal(label), b -> {
                             MirrorsNetwork.sendToServer(new ServerboundTeleportRequestPacket(
                                     info.mirrorId, sourceMirrorPos, isHandheld));
-                            onClose();
+                            minecraft.setScreen(new MirrorTravelScreen(info, sourceMirrorPos, isHandheld));
                         });
                 btn.active = info.inRange && !onCooldown;
                 addRenderableWidget(btn);

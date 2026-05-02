@@ -299,7 +299,8 @@ public class MirrorsNetwork {
 
     /**
      * Builds and sends a waypoint sync packet to the given player.
-     * Includes all mirrors the player can access (teleport, pocket, beacon) — not calling.
+     * Includes all accessible mirrors (own + permitted + public beacons), including calling mirrors.
+     * Rich metadata (signal, tier, owner, range) is populated for premium map-compat displays.
      */
     public static void sendWaypointSync(net.minecraft.server.level.ServerPlayer player) {
         com.ether.mirrors.data.MirrorNetworkData networkData =
@@ -307,32 +308,61 @@ public class MirrorsNetwork {
         com.ether.mirrors.data.PermissionData permData =
                 com.ether.mirrors.data.PermissionData.get(player.server);
 
+        net.minecraft.core.BlockPos playerPos   = player.blockPosition();
+        net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> playerDim =
+                player.level().dimension();
+
         java.util.Set<java.util.UUID> seen = new java.util.HashSet<>();
         java.util.List<ClientboundSyncWaypointsPacket.WaypointData> list = new java.util.ArrayList<>();
 
-        // Accessible mirrors (own + permitted)
+        // Accessible mirrors (own + permitted, all types)
         for (com.ether.mirrors.data.MirrorNetworkData.MirrorEntry e
                 : networkData.getConnectedMirrors(player.getUUID(), permData)) {
-            if ("calling".equals(e.type.getName())) continue;
             if (seen.add(e.mirrorId)) {
-                list.add(new ClientboundSyncWaypointsPacket.WaypointData(
-                        e.mirrorId, e.name,
-                        e.pos.getX(), e.pos.getY(), e.pos.getZ(),
-                        e.dimension.location().toString(), e.type.getName()));
+                list.add(buildWaypointData(e, player, playerPos, playerDim));
             }
         }
-        // Beacon mirrors (globally visible)
+        // Beacon mirrors (globally visible, deduplicated)
         for (com.ether.mirrors.data.MirrorNetworkData.MirrorEntry e : networkData.getAllMirrors()) {
             if (e.type != com.ether.mirrors.util.MirrorType.BEACON) continue;
             if (seen.add(e.mirrorId)) {
-                list.add(new ClientboundSyncWaypointsPacket.WaypointData(
-                        e.mirrorId, e.name,
-                        e.pos.getX(), e.pos.getY(), e.pos.getZ(),
-                        e.dimension.location().toString(), e.type.getName()));
+                list.add(buildWaypointData(e, player, playerPos, playerDim));
             }
         }
 
         sendToPlayer(player, new ClientboundSyncWaypointsPacket(list));
+    }
+
+    private static ClientboundSyncWaypointsPacket.WaypointData buildWaypointData(
+            com.ether.mirrors.data.MirrorNetworkData.MirrorEntry e,
+            net.minecraft.server.level.ServerPlayer player,
+            net.minecraft.core.BlockPos playerPos,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> playerDim) {
+
+        boolean isOwn  = e.ownerUUID.equals(player.getUUID());
+        int     range  = com.ether.mirrors.util.RangeHelper.getRangeForTier(e.tier);
+        double  signal = com.ether.mirrors.util.RangeHelper.getSignalStrength(
+                e.tier, playerPos, playerDim, e.pos, e.dimension);
+
+        // Resolve owner display name (online first, then profile cache)
+        String ownerName = "";
+        net.minecraft.server.level.ServerPlayer ownerPlayer =
+                player.server.getPlayerList().getPlayer(e.ownerUUID);
+        if (ownerPlayer != null) {
+            ownerName = ownerPlayer.getName().getString();
+        } else {
+            java.util.Optional<com.mojang.authlib.GameProfile> profile =
+                    player.server.getProfileCache().get(e.ownerUUID);
+            if (profile.isPresent() && profile.get().getName() != null) {
+                ownerName = profile.get().getName();
+            }
+        }
+
+        return new ClientboundSyncWaypointsPacket.WaypointData(
+                e.mirrorId, e.name,
+                e.pos.getX(), e.pos.getY(), e.pos.getZ(),
+                e.dimension.location().toString(), e.type.getName(),
+                signal, e.tier.getName(), ownerName, isOwn, range);
     }
 
     public static void sendToServer(Object msg) {

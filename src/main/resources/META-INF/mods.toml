@@ -41,3 +41,10 @@ Three mirror types across six material tiers with permission-based networking.
     versionRange="*"
     ordering="AFTER"
     side="CLIENT"
+
+[[dependencies.ethersmirrors]]
+    modId="journeymap"
+    mandatory=false
+    versionRange="*"
+    ordering="AFTER"
+    side="CLIENT"
