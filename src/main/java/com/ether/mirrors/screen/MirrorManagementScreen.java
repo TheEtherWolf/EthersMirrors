@@ -295,24 +295,18 @@ public class MirrorManagementScreen extends Screen {
                         }
                     }));
 
-            // Online players — one-click allow/block
+            // Online player chips — click to fill the allow field
             List<String> onlineNames = getOnlinePlayerNames();
-            int onlineRowY = blockFieldY + 24;
-            for (int i = 0; i < Math.min(onlineNames.size(), 5); i++) {
-                final String name = onlineNames.get(i);
-                int ry = onlineRowY + i * 16;
-                addRenderableWidget(MirrorButton.teal(pl + PANEL_W - 118, ry, 50, 13,
-                        Component.literal("Allow"), b -> {
-                            MirrorsNetwork.sendToServer(new ServerboundSetMirrorOverridePacket(mirrorId, name, "allow"));
-                            allowList.add(new ClientboundOpenMirrorManagementPacket.PlayerEntry(UUID.randomUUID(), name));
-                            rebuildWidgets();
-                        }));
-                addRenderableWidget(MirrorButton.red(pl + PANEL_W - 64, ry, 50, 13,
-                        Component.literal("Block"), b -> {
-                            MirrorsNetwork.sendToServer(new ServerboundSetMirrorOverridePacket(mirrorId, name, "block"));
-                            blockList.add(new ClientboundOpenMirrorManagementPacket.PlayerEntry(UUID.randomUUID(), name));
-                            rebuildWidgets();
-                        }));
+            int chipY = blockFieldY + 22;
+            int chipX = pl + 8;
+            for (String name : onlineNames) {
+                int cw = this.font.width(name) + 12;
+                if (chipX + cw > pl + PANEL_W - 14) break; // don't overflow panel
+                addRenderableWidget(MirrorButton.of(chipX, chipY, cw, 13,
+                        Component.literal(name),
+                        b -> allowField.setValue(name),
+                        UITheme.BORDER_MID, UITheme.TEXT_OWN));
+                chipX += cw + 4;
             }
         }
 
@@ -512,19 +506,8 @@ public class MirrorManagementScreen extends Screen {
             g.fill(pl + 8, blockFieldY - 1, pl + 209, blockFieldY + 13, 0xFF060022);
             g.drawString(font, "Block:", pl + 8, blockFieldY - 11, UITheme.TEXT_MUTED, false);
 
-            // Online player quick-add list
-            List<String> onlineNames = getOnlinePlayerNames();
-            int onlineRowY = blockFieldY + 24;
-            if (!onlineNames.isEmpty()) {
-                g.drawString(font, "Online \u2014 quick add:", pl + 8, onlineRowY - 9, UITheme.TEXT_MUTED, false);
-                for (int i = 0; i < Math.min(onlineNames.size(), 5); i++) {
-                    int ry = onlineRowY + i * 16;
-                    UITheme.drawRow(g, pl + 8, ry, pr - 8, ry + 13, i % 2 == 1, false);
-                    g.drawString(font, onlineNames.get(i), pl + 12, ry + 3, UITheme.TEXT_OWN, false);
-                }
-            } else {
-                g.drawString(font, "No other players online", pl + 8, onlineRowY, UITheme.withAlpha(UITheme.TEXT_MUTED, 0x88), false);
-            }
+            // Online player chips label
+            g.drawString(font, "Online:", pl + 8, blockFieldY + 14, UITheme.withAlpha(UITheme.TEXT_MUTED, 0xAA), false);
         }
 
         // ── Tab 2: Info ───────────────────────────────────────────────────
