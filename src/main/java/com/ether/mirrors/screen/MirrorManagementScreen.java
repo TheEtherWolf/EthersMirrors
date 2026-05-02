@@ -66,6 +66,14 @@ public class MirrorManagementScreen extends Screen {
     private int iconSelectedColor = 1;
     private boolean iconDragging = false;
     private int iconEditorX, iconEditorY;
+    private int iconHoverX = -1, iconHoverY = -1;
+
+    private static final int ICON_CELL      = 4;
+    private static final int ICON_CANVAS_PX = ICON_CELL * 16; // 64
+    private static final int PAL_SW_SZ      = 14;
+    private static final int PAL_SW_GAP     = 2;
+    private static final int PAL_ROW_GAP    = 3;
+    private static final int PAL_TOTAL_W    = 16 * PAL_SW_SZ + 15 * PAL_SW_GAP; // 254
 
     public MirrorManagementScreen(ClientboundOpenMirrorManagementPacket data) {
         super(Component.literal("Mirror Management"));
@@ -324,8 +332,8 @@ public class MirrorManagementScreen extends Screen {
             int bx = pl + 8;
             int ct2 = contentTop();
 
-            // Compute icon editor position
-            iconEditorX = pl + (PANEL_W - 48) / 2; // centered
+            // Compute icon editor position (canvas 64px centered in 400px panel)
+            iconEditorX = pl + (PANEL_W - ICON_CANVAS_PX) / 2; // pl+168
             iconEditorY = ct2 + 14;
 
             // Save icon button
@@ -560,41 +568,79 @@ public class MirrorManagementScreen extends Screen {
             // Draw "Icon" label
             g.drawString(font, "Icon:", labelX, ct + 10, UITheme.TEXT_MUTED, false);
 
-            // Draw icon editor grid
+            // Draw icon editor grid cells
             for (int py = 0; py < 16; py++) {
                 for (int px = 0; px < 16; px++) {
                     int color = MirrorPlacementScreen.ICON_PALETTE[iconPixels[py * 16 + px] & 0xFF];
-                    int cx2 = iconEditorX + px * 3;
-                    int cy2 = iconEditorY + py * 3;
+                    int cx2 = iconEditorX + px * ICON_CELL;
+                    int cy2 = iconEditorY + py * ICON_CELL;
                     if ((color >>> 24) == 0) {
-                        int cb = ((px + py) % 2 == 0) ? 0xFF333344 : 0xFF2A2A3A;
-                        g.fill(cx2, cy2, cx2 + 3, cy2 + 3, cb);
+                        g.fill(cx2, cy2, cx2 + ICON_CELL, cy2 + ICON_CELL,
+                                ((px + py) % 2 == 0) ? 0xFF2A2A3A : 0xFF222232);
                     } else {
-                        g.fill(cx2, cy2, cx2 + 3, cy2 + 3, color);
+                        g.fill(cx2, cy2, cx2 + ICON_CELL, cy2 + ICON_CELL, color);
                     }
                 }
             }
-            // Grid border
-            g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX + 49, iconEditorY, UITheme.BORDER_MID);
-            g.fill(iconEditorX - 1, iconEditorY + 48, iconEditorX + 49, iconEditorY + 49, UITheme.BORDER_MID);
-            g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX, iconEditorY + 49, UITheme.BORDER_MID);
-            g.fill(iconEditorX + 48, iconEditorY - 1, iconEditorX + 49, iconEditorY + 49, UITheme.BORDER_MID);
+            // Grid lines (subtle)
+            for (int row = 1; row < 16; row++)
+                g.fill(iconEditorX, iconEditorY + row * ICON_CELL,
+                       iconEditorX + ICON_CANVAS_PX, iconEditorY + row * ICON_CELL + 1, 0x18FFFFFF);
+            for (int col2 = 1; col2 < 16; col2++)
+                g.fill(iconEditorX + col2 * ICON_CELL, iconEditorY,
+                       iconEditorX + col2 * ICON_CELL + 1, iconEditorY + ICON_CANVAS_PX, 0x18FFFFFF);
+            // Hover highlight
+            if (iconHoverX >= 0 && iconHoverY >= 0)
+                g.fill(iconEditorX + iconHoverX * ICON_CELL, iconEditorY + iconHoverY * ICON_CELL,
+                       iconEditorX + iconHoverX * ICON_CELL + ICON_CELL,
+                       iconEditorY + iconHoverY * ICON_CELL + ICON_CELL, 0x40FFFFFF);
+            // Double border
+            int ice = iconEditorX + ICON_CANVAS_PX, icb = iconEditorY + ICON_CANVAS_PX;
+            g.fill(iconEditorX - 1, iconEditorY - 1, ice + 1, iconEditorY,     UITheme.BORDER_MID);
+            g.fill(iconEditorX - 1, icb,              ice + 1, icb + 1,          UITheme.BORDER_MID);
+            g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX, icb + 1,     UITheme.BORDER_MID);
+            g.fill(ice,              iconEditorY - 1, ice + 1, icb + 1,          UITheme.BORDER_MID);
+            g.fill(iconEditorX - 2, iconEditorY - 2, ice + 2, iconEditorY - 1, UITheme.BORDER_ACCENT);
+            g.fill(iconEditorX - 2, icb + 1,          ice + 2, icb + 2,          UITheme.BORDER_ACCENT);
+            g.fill(iconEditorX - 2, iconEditorY - 2, iconEditorX - 1, icb + 2, UITheme.BORDER_ACCENT);
+            g.fill(ice + 1,          iconEditorY - 2, ice + 2, icb + 2,          UITheme.BORDER_ACCENT);
 
-            // Palette row: 16 swatches at 10x10 with 1px gap, starting below editor
-            int paletteY = iconEditorY + 52;
-            int paletteX = pl + (PANEL_W - (16 * 11 - 1)) / 2;
-            for (int c = 0; c < 16; c++) {
-                int sc = paletteX + c * 11;
-                int col = MirrorPlacementScreen.ICON_PALETTE[c];
-                if (c == 0) col = 0xFF333344; // transparent shown as dark
-                if (c == iconSelectedColor) {
-                    g.fill(sc - 1, paletteY - 1, sc + 11, paletteY + 11, 0xFFFFFFFF);
+            // Info strip: hint left, selected color name right
+            int stripY = iconEditorY + ICON_CANVAS_PX + 4;
+            g.drawString(font, "LMB paint \u00b7 RMB erase \u00b7 C clear",
+                    pl + 14, stripY, UITheme.TEXT_MUTED, false);
+            String selName = MirrorPlacementScreen.PAL_NAMES[iconSelectedColor];
+            int selNameW = font.width(selName);
+            int selSwX = pl + PANEL_W - 14 - selNameW - 12;
+            int selSwCol = (iconSelectedColor == 0) ? 0xFF444455
+                    : MirrorPlacementScreen.ICON_PALETTE[iconSelectedColor];
+            g.fill(selSwX, stripY, selSwX + 8, stripY + 8, selSwCol);
+            g.drawString(font, selName, selSwX + 10, stripY, UITheme.TEXT_WHITE, false);
+
+            // Palette: 2 rows of 16, centered
+            int paletteY = stripY + 8 + 4;
+            int paletteX = pl + (PANEL_W - PAL_TOTAL_W) / 2;
+            for (int palRow = 0; palRow < 2; palRow++) {
+                int rowY = paletteY + palRow * (PAL_SW_SZ + PAL_ROW_GAP);
+                for (int palCol = 0; palCol < 16; palCol++) {
+                    int c = palRow * 16 + palCol;
+                    int sc = paletteX + palCol * (PAL_SW_SZ + PAL_SW_GAP);
+                    if (c == iconSelectedColor) {
+                        g.fill(sc - 2, rowY - 2, sc + PAL_SW_SZ + 2, rowY + PAL_SW_SZ + 2, UITheme.BORDER_MID);
+                        g.fill(sc - 1, rowY - 1, sc + PAL_SW_SZ + 1, rowY + PAL_SW_SZ + 1, UITheme.TEXT_GOLD);
+                    }
+                    if (c == 0) {
+                        int h = PAL_SW_SZ / 2;
+                        g.fill(sc,     rowY,     sc + h, rowY + h, 0xFF444455);
+                        g.fill(sc + h, rowY,     sc + PAL_SW_SZ, rowY + h, 0xFF2A2A3A);
+                        g.fill(sc,     rowY + h, sc + h, rowY + PAL_SW_SZ, 0xFF2A2A3A);
+                        g.fill(sc + h, rowY + h, sc + PAL_SW_SZ, rowY + PAL_SW_SZ, 0xFF444455);
+                    } else {
+                        g.fill(sc, rowY, sc + PAL_SW_SZ, rowY + PAL_SW_SZ,
+                                MirrorPlacementScreen.ICON_PALETTE[c]);
+                    }
                 }
-                g.fill(sc, paletteY, sc + 10, paletteY + 10, col);
             }
-            // Selected color label
-            g.drawString(font, "Selected: " + (iconSelectedColor == 0 ? "eraser" : "color " + iconSelectedColor),
-                    labelX, paletteY + 13, UITheme.TEXT_MUTED, false);
 
             // Folder label — field widget is at ct+172
             g.drawString(font, "Folder:", labelX, ct + 162, UITheme.TEXT_MUTED, false);
@@ -671,21 +717,43 @@ public class MirrorManagementScreen extends Screen {
 
     private boolean handleIconEdit(double mouseX, double mouseY, int button) {
         if (activeTab != 2) return false;
-        int px = (int)(mouseX - iconEditorX) / 3;
-        int py = (int)(mouseY - iconEditorY) / 3;
-        if (px >= 0 && px < 16 && py >= 0 && py < 16) {
+        // Canvas hit
+        if (mouseX >= iconEditorX && mouseX < iconEditorX + ICON_CANVAS_PX
+                && mouseY >= iconEditorY && mouseY < iconEditorY + ICON_CANVAS_PX) {
+            int px = ((int)mouseX - iconEditorX) / ICON_CELL;
+            int py = ((int)mouseY - iconEditorY) / ICON_CELL;
             if (button == 0) iconPixels[py * 16 + px] = (byte) iconSelectedColor;
             else if (button == 1) iconPixels[py * 16 + px] = 0;
             return true;
         }
-        // Palette click
-        int paletteY = iconEditorY + 52;
-        int paletteX = panelLeft() + (PANEL_W - (16 * 11 - 1)) / 2;
-        if (mouseY >= paletteY && mouseY < paletteY + 10) {
-            int c = (int)(mouseX - paletteX) / 11;
-            if (c >= 0 && c < 16) { iconSelectedColor = c; return true; }
+        // Palette hit (2 rows)
+        int paletteY = iconEditorY + ICON_CANVAS_PX + 16; // canvas+4+strip(8)+4
+        int paletteX = panelLeft() + (PANEL_W - PAL_TOTAL_W) / 2;
+        for (int palRow = 0; palRow < 2; palRow++) {
+            int rowY = paletteY + palRow * (PAL_SW_SZ + PAL_ROW_GAP);
+            if (mouseY >= rowY && mouseY < rowY + PAL_SW_SZ) {
+                int palCol = ((int)mouseX - paletteX) / (PAL_SW_SZ + PAL_SW_GAP);
+                if (palCol >= 0 && palCol < 16 && mouseX >= paletteX + palCol * (PAL_SW_SZ + PAL_SW_GAP)
+                        && mouseX < paletteX + palCol * (PAL_SW_SZ + PAL_SW_GAP) + PAL_SW_SZ) {
+                    iconSelectedColor = palRow * 16 + palCol;
+                    return true;
+                }
+            }
         }
         return false;
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        if (activeTab == 2 && mouseX >= iconEditorX && mouseX < iconEditorX + ICON_CANVAS_PX
+                && mouseY >= iconEditorY && mouseY < iconEditorY + ICON_CANVAS_PX) {
+            iconHoverX = ((int)mouseX - iconEditorX) / ICON_CELL;
+            iconHoverY = ((int)mouseY - iconEditorY) / ICON_CELL;
+        } else {
+            iconHoverX = -1;
+            iconHoverY = -1;
+        }
+        super.mouseMoved(mouseX, mouseY);
     }
 
     @Override
@@ -704,5 +772,15 @@ public class MirrorManagementScreen extends Screen {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         iconDragging = false;
         return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // C key clears canvas when on Info tab
+        if (activeTab == 2 && keyCode == 67 && modifiers == 0) {
+            java.util.Arrays.fill(iconPixels, (byte) 0);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 }

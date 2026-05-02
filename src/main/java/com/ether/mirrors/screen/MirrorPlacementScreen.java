@@ -13,26 +13,54 @@ public class MirrorPlacementScreen extends Screen {
 
     // ── Icon palette ──────────────────────────────────────────────────────────
     public static final int[] ICON_PALETTE = {
-        0x00000000, // 0: transparent
-        0xFFFFFFFF, // 1: white
-        0xFFCCCCCC, // 2: light grey
-        0xFF888888, // 3: grey
-        0xFF444444, // 4: dark grey
-        0xFF111111, // 5: black
-        0xFFFF4444, // 6: red
-        0xFFFF8C00, // 7: orange
-        0xFFFFDD00, // 8: yellow
-        0xFF44CC44, // 9: lime
+        // Row 1 — neutrals + primaries
+        0x00000000, // 0:  transparent / erase
+        0xFFFFFFFF, // 1:  white
+        0xFFCCCCCC, // 2:  light grey
+        0xFF888888, // 3:  grey
+        0xFF444444, // 4:  dark grey
+        0xFF111111, // 5:  black
+        0xFFFF4444, // 6:  red
+        0xFFFF8C00, // 7:  orange
+        0xFFFFDD00, // 8:  yellow
+        0xFF44CC44, // 9:  lime
         0xFF00AACC, // 10: cyan
         0xFF4488FF, // 11: blue
         0xFF8844FF, // 12: purple
         0xFFFF44CC, // 13: pink
         0xFFFFD700, // 14: gold
         0xFFAA77FF, // 15: lavender
+        // Row 2 — expanded tones
+        0xFF87CEEB, // 16: sky
+        0xFF008080, // 17: teal
+        0xFF228B22, // 18: forest
+        0xFF808000, // 19: olive
+        0xFF8B4513, // 20: brown
+        0xFF8B0000, // 21: maroon
+        0xFFB22222, // 22: rust
+        0xFFFF7F50, // 23: coral
+        0xFFFF00FF, // 24: magenta
+        0xFFFFB6C1, // 25: rose
+        0xFFFFF8DC, // 26: cream
+        0xFFD2B48C, // 27: tan
+        0xFF000080, // 28: navy
+        0xFF4B0082, // 29: indigo
+        0xFF98FF98, // 30: mint
+        0xFFCB9ED2, // 31: lilac
     };
     public static final int ICON_W = 16;
     public static final int ICON_H = 16;
     public static final int ICON_BYTES = ICON_W * ICON_H; // 256
+    public static final String[] PAL_NAMES = {
+        // Row 1
+        "Erase","White","L.Grey","Grey","D.Grey","Black",
+        "Red","Orange","Yellow","Lime","Cyan","Blue",
+        "Purple","Pink","Gold","Lav.",
+        // Row 2
+        "Sky","Teal","Forest","Olive","Brown","Maroon",
+        "Rust","Coral","Magenta","Rose","Cream","Tan",
+        "Navy","Indigo","Mint","Lilac"
+    };
 
     // ── Dye swatches ──────────────────────────────────────────────────────────
     private static final int[] DYE_COLORS = {
@@ -80,7 +108,15 @@ public class MirrorPlacementScreen extends Screen {
     private static final int SWATCH_GAP = 2;
     private static final int SWATCH_SZ  = (PANEL_W - SEC_PAD_X * 2 - 15 * SWATCH_GAP) / 16; // ~18
     private static final int DESC_H     = 40;
-    private static final int ICON_EDITOR_H = 48 + 4 + 10; // 16x16 grid at 3px + gap + palette
+    private static final int ICON_CELL      = 4;
+    private static final int ICON_CANVAS_PX = ICON_CELL * ICON_W; // 64
+    private static final int PAL_ROWS       = 2;
+    private static final int PAL_SW_SZ      = 14;
+    private static final int PAL_SW_GAP     = 2;
+    private static final int PAL_ROW_GAP    = 3;
+    private static final int PAL_TOTAL_W    = 16 * PAL_SW_SZ + 15 * PAL_SW_GAP; // 254
+    private static final int PAL_H          = PAL_ROWS * PAL_SW_SZ + (PAL_ROWS - 1) * PAL_ROW_GAP; // 31
+    private static final int ICON_EDITOR_H  = ICON_CANVAS_PX + 4 + 8 + 4 + PAL_H; // 111
     private static final int TOGGLE_H   = 24;
     private static final int PREVIEW_H  = 44;
     private static final int FOOTER_H   = 30;
@@ -96,6 +132,7 @@ public class MirrorPlacementScreen extends Screen {
     private int iconSelectedColor = 1;
     private boolean iconDragging = false;
     private int iconEditorX, iconEditorY;
+    private int iconHoverX = -1, iconHoverY = -1;
     private int privacyLevel = 0; // 0=LOCKED
     private int dyeColorIndex = -1; // -1 = none
     private String description = "";
@@ -260,38 +297,84 @@ public class MirrorPlacementScreen extends Screen {
         drawLabel(g, pl + SEC_PAD_X, top, "Icon", "Draw your icon", false);
         top += LABEL_H;
 
-        // Update iconEditorY based on actual render position
+        // Center canvas in panel
         iconEditorY = top;
-        iconEditorX = pl + SEC_PAD_X;
+        iconEditorX = pl + (PANEL_W - ICON_CANVAS_PX) / 2;
 
-        // Draw grid (16x16 cells at 3px each)
+        // Draw grid cells
         for (int py2 = 0; py2 < 16; py2++) {
             for (int px2 = 0; px2 < 16; px2++) {
                 int col = ICON_PALETTE[iconPixels[py2 * 16 + px2] & 0xFF];
-                int cx2 = iconEditorX + px2 * 3;
-                int cy2 = iconEditorY + py2 * 3;
+                int cx2 = iconEditorX + px2 * ICON_CELL;
+                int cy2 = iconEditorY + py2 * ICON_CELL;
                 if ((col >>> 24) == 0) {
-                    g.fill(cx2, cy2, cx2 + 3, cy2 + 3, ((px2 + py2) % 2 == 0) ? 0xFF2A2A3A : 0xFF222232);
+                    g.fill(cx2, cy2, cx2 + ICON_CELL, cy2 + ICON_CELL,
+                            ((px2 + py2) % 2 == 0) ? 0xFF2A2A3A : 0xFF222232);
                 } else {
-                    g.fill(cx2, cy2, cx2 + 3, cy2 + 3, col);
+                    g.fill(cx2, cy2, cx2 + ICON_CELL, cy2 + ICON_CELL, col);
                 }
             }
         }
-        // Border
-        g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX + 49, iconEditorY, DC_BORDER_DIM);
-        g.fill(iconEditorX - 1, iconEditorY + 48, iconEditorX + 49, iconEditorY + 49, DC_BORDER_DIM);
-        g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX, iconEditorY + 49, DC_BORDER_DIM);
-        g.fill(iconEditorX + 48, iconEditorY - 1, iconEditorX + 49, iconEditorY + 49, DC_BORDER_DIM);
 
-        // Palette row
-        int pal16Y = iconEditorY + 52;
-        int pal16X = pl + SEC_PAD_X;
-        for (int c = 0; c < 16; c++) {
-            int sc = pal16X + c * 19;
-            int col2 = ICON_PALETTE[c];
-            if (c == 0) col2 = 0xFF2A2A3A;
-            if (c == iconSelectedColor) g.fill(sc - 1, pal16Y - 1, sc + 11, pal16Y + 11, 0xFFFFFFFF);
-            g.fill(sc, pal16Y, sc + 10, pal16Y + 10, col2);
+        // Grid lines (subtle)
+        for (int row = 1; row < 16; row++)
+            g.fill(iconEditorX, iconEditorY + row * ICON_CELL,
+                   iconEditorX + ICON_CANVAS_PX, iconEditorY + row * ICON_CELL + 1, 0x18FFFFFF);
+        for (int col2 = 1; col2 < 16; col2++)
+            g.fill(iconEditorX + col2 * ICON_CELL, iconEditorY,
+                   iconEditorX + col2 * ICON_CELL + 1, iconEditorY + ICON_CANVAS_PX, 0x18FFFFFF);
+
+        // Hover highlight
+        if (iconHoverX >= 0 && iconHoverY >= 0)
+            g.fill(iconEditorX + iconHoverX * ICON_CELL, iconEditorY + iconHoverY * ICON_CELL,
+                   iconEditorX + iconHoverX * ICON_CELL + ICON_CELL,
+                   iconEditorY + iconHoverY * ICON_CELL + ICON_CELL, 0x40FFFFFF);
+
+        // Double border: inner dim, outer accent
+        int ce = iconEditorX + ICON_CANVAS_PX, cb = iconEditorY + ICON_CANVAS_PX;
+        g.fill(iconEditorX - 1, iconEditorY - 1, ce + 1, iconEditorY,     DC_BORDER_DIM);
+        g.fill(iconEditorX - 1, cb,              ce + 1, cb + 1,           DC_BORDER_DIM);
+        g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX, cb + 1,     DC_BORDER_DIM);
+        g.fill(ce,              iconEditorY - 1, ce + 1, cb + 1,           DC_BORDER_DIM);
+        g.fill(iconEditorX - 2, iconEditorY - 2, ce + 2, iconEditorY - 1, DC_BORDER_ACC);
+        g.fill(iconEditorX - 2, cb + 1,          ce + 2, cb + 2,           DC_BORDER_ACC);
+        g.fill(iconEditorX - 2, iconEditorY - 2, iconEditorX - 1, cb + 2, DC_BORDER_ACC);
+        g.fill(ce + 1,          iconEditorY - 2, ce + 2, cb + 2,           DC_BORDER_ACC);
+
+        // Info strip: hint left, selected color name right
+        int stripY = iconEditorY + ICON_CANVAS_PX + 4;
+        g.drawString(font, "LMB paint \u00b7 RMB erase \u00b7 C clear",
+                pl + SEC_PAD_X, stripY, DC_MUTED, false);
+        String palName = PAL_NAMES[iconSelectedColor];
+        int nameW = font.width(palName);
+        int swX2 = pl + PANEL_W - SEC_PAD_X - nameW - 12;
+        int swCol = (iconSelectedColor == 0) ? 0xFF444455 : ICON_PALETTE[iconSelectedColor];
+        g.fill(swX2, stripY, swX2 + 8, stripY + 8, swCol);
+        g.drawString(font, palName, swX2 + 10, stripY, DC_TEXT, false);
+
+        // Palette: 2 rows of 16, centered
+        int palY = stripY + 8 + 4;
+        int palX = pl + (PANEL_W - PAL_TOTAL_W) / 2;
+        for (int row = 0; row < PAL_ROWS; row++) {
+            int rowY = palY + row * (PAL_SW_SZ + PAL_ROW_GAP);
+            for (int col2 = 0; col2 < 16; col2++) {
+                int c = row * 16 + col2;
+                int sc = palX + col2 * (PAL_SW_SZ + PAL_SW_GAP);
+                // Selected: gold halo
+                if (c == iconSelectedColor) {
+                    g.fill(sc - 2, rowY - 2, sc + PAL_SW_SZ + 2, rowY + PAL_SW_SZ + 2, DC_GOLD_DIM);
+                    g.fill(sc - 1, rowY - 1, sc + PAL_SW_SZ + 1, rowY + PAL_SW_SZ + 1, DC_GOLD);
+                }
+                if (c == 0) {
+                    int h = PAL_SW_SZ / 2;
+                    g.fill(sc,     rowY,     sc + h, rowY + h, 0xFF444455);
+                    g.fill(sc + h, rowY,     sc + PAL_SW_SZ, rowY + h, 0xFF2A2A3A);
+                    g.fill(sc,     rowY + h, sc + h, rowY + PAL_SW_SZ, 0xFF2A2A3A);
+                    g.fill(sc + h, rowY + h, sc + PAL_SW_SZ, rowY + PAL_SW_SZ, 0xFF444455);
+                } else {
+                    g.fill(sc, rowY, sc + PAL_SW_SZ, rowY + PAL_SW_SZ, ICON_PALETTE[c]);
+                }
+            }
         }
 
         top += ICON_EDITOR_H;
@@ -681,22 +764,43 @@ public class MirrorPlacementScreen extends Screen {
     }
 
     private boolean handleIconEditPlacement(double mouseX, double mouseY, int button) {
-        // Grid
-        int px2 = ((int)mouseX - iconEditorX) / 3;
-        int py2 = ((int)mouseY - iconEditorY) / 3;
-        if (px2 >= 0 && px2 < 16 && py2 >= 0 && py2 < 16) {
+        // Canvas hit
+        if (mouseX >= iconEditorX && mouseX < iconEditorX + ICON_CANVAS_PX
+                && mouseY >= iconEditorY && mouseY < iconEditorY + ICON_CANVAS_PX) {
+            int px2 = ((int)mouseX - iconEditorX) / ICON_CELL;
+            int py2 = ((int)mouseY - iconEditorY) / ICON_CELL;
             if (button == 0) iconPixels[py2 * 16 + px2] = (byte) iconSelectedColor;
             else if (button == 1) iconPixels[py2 * 16 + px2] = 0;
             return true;
         }
-        // Palette
-        int pal16Y = iconEditorY + 52;
-        int pal16X = pl + SEC_PAD_X;
-        if (mouseY >= pal16Y && mouseY < pal16Y + 10) {
-            int c = ((int)mouseX - pal16X) / 19;
-            if (c >= 0 && c < 16) { iconSelectedColor = c; return true; }
+        // Palette hit (2 rows)
+        int palY = iconEditorY + ICON_CANVAS_PX + 16; // canvas + 4 + strip(8) + 4
+        int palX = pl + (PANEL_W - PAL_TOTAL_W) / 2;
+        for (int row = 0; row < PAL_ROWS; row++) {
+            int rowY = palY + row * (PAL_SW_SZ + PAL_ROW_GAP);
+            if (mouseY >= rowY && mouseY < rowY + PAL_SW_SZ) {
+                int col2 = ((int)mouseX - palX) / (PAL_SW_SZ + PAL_SW_GAP);
+                if (col2 >= 0 && col2 < 16 && mouseX >= palX + col2 * (PAL_SW_SZ + PAL_SW_GAP)
+                        && mouseX < palX + col2 * (PAL_SW_SZ + PAL_SW_GAP) + PAL_SW_SZ) {
+                    iconSelectedColor = row * 16 + col2;
+                    return true;
+                }
+            }
         }
         return false;
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        if (mouseX >= iconEditorX && mouseX < iconEditorX + ICON_CANVAS_PX
+                && mouseY >= iconEditorY && mouseY < iconEditorY + ICON_CANVAS_PX) {
+            iconHoverX = ((int)mouseX - iconEditorX) / ICON_CELL;
+            iconHoverY = ((int)mouseY - iconEditorY) / ICON_CELL;
+        } else {
+            iconHoverX = -1;
+            iconHoverY = -1;
+        }
+        super.mouseMoved(mouseX, mouseY);
     }
 
     @Override
@@ -713,6 +817,11 @@ public class MirrorPlacementScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // C key clears canvas
+        if (keyCode == 67 && modifiers == 0) {
+            java.util.Arrays.fill(iconPixels, (byte) 0);
+            return true;
+        }
         // ESC
         if (keyCode == 256) { onClose(); return true; }
         // Enter → activate
