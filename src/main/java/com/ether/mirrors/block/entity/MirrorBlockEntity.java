@@ -32,7 +32,7 @@ public class MirrorBlockEntity extends BlockEntity {
     private int pulseTicks = 0;
     private int dyeColor = -1; // -1 = no dye, 0-15 = DyeColor ordinal
     private boolean activated = false; // must be activated by owner before anyone can use it
-    private int sigilIndex = 0; // 0-11, indexes MirrorPlacementScreen.SIGILS
+    private byte[] iconPixels = new byte[256]; // 16x16 pixel art icon (palette indices)
     private String description = ""; // optional mirror description, max 128 chars
 
     public MirrorBlockEntity(BlockPos pos, BlockState state, MirrorTier tier, MirrorType type) {
@@ -152,8 +152,8 @@ public class MirrorBlockEntity extends BlockEntity {
     public int getDyeColor() { return dyeColor; }
     public void setDyeColor(int dyeColor) { this.dyeColor = dyeColor; this.setChanged(); }
 
-    public int getSigilIndex() { return sigilIndex; }
-    public void setSigilIndex(int idx) { this.sigilIndex = Math.max(0, Math.min(11, idx)); setChanged(); }
+    public byte[] getIconPixels() { return iconPixels; }
+    public void setIconPixels(byte[] p) { this.iconPixels = p != null && p.length == 256 ? p.clone() : new byte[256]; setChanged(); }
 
     public String getDescription() { return description; }
     public void setDescription(String desc) { this.description = desc != null ? desc : ""; setChanged(); }
@@ -193,7 +193,7 @@ public class MirrorBlockEntity extends BlockEntity {
         tag.putInt("PulseTicks", pulseTicks);
         if (dyeColor >= 0) tag.putInt("DyeColor", dyeColor);
         tag.putBoolean("Activated", activated);
-        tag.putInt("SigilIndex", sigilIndex);
+        tag.putByteArray("IconPixels", iconPixels);
         tag.putString("Description", description);
     }
 
@@ -250,7 +250,11 @@ public class MirrorBlockEntity extends BlockEntity {
         }
         if (tag.contains("DyeColor")) dyeColor = tag.getInt("DyeColor");
         if (tag.contains("Activated")) activated = tag.getBoolean("Activated");
-        if (tag.contains("SigilIndex")) sigilIndex = tag.getInt("SigilIndex");
+        if (tag.contains("IconPixels")) {
+            byte[] p = tag.getByteArray("IconPixels");
+            if (p.length == 256) iconPixels = p;
+        }
+        // Legacy: ignore SigilIndex (not migrated — old sigil just disappears)
         if (tag.contains("Description")) description = tag.getString("Description");
     }
 
@@ -273,7 +277,7 @@ public class MirrorBlockEntity extends BlockEntity {
         tag.putInt("PulseTicks", pulseTicks);
         if (dyeColor >= 0) tag.putInt("DyeColor", dyeColor);
         tag.putBoolean("Activated", activated);
-        tag.putInt("SigilIndex", sigilIndex);
+        tag.putByteArray("IconPixels", iconPixels);
         tag.putString("Description", description);
         return tag;
     }

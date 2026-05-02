@@ -11,8 +11,28 @@ import net.minecraft.network.chat.Component;
 
 public class MirrorPlacementScreen extends Screen {
 
-    // ── Sigils ────────────────────────────────────────────────────────────────
-    static final String[] SIGILS = { "✦", "◈", "⚿", "☽", "☾", "⌬", "✧", "⟁", "⌖", "⍟", "⊛", "❂" };
+    // ── Icon palette ──────────────────────────────────────────────────────────
+    public static final int[] ICON_PALETTE = {
+        0x00000000, // 0: transparent
+        0xFFFFFFFF, // 1: white
+        0xFFCCCCCC, // 2: light grey
+        0xFF888888, // 3: grey
+        0xFF444444, // 4: dark grey
+        0xFF111111, // 5: black
+        0xFFFF4444, // 6: red
+        0xFFFF8C00, // 7: orange
+        0xFFFFDD00, // 8: yellow
+        0xFF44CC44, // 9: lime
+        0xFF00AACC, // 10: cyan
+        0xFF4488FF, // 11: blue
+        0xFF8844FF, // 12: purple
+        0xFFFF44CC, // 13: pink
+        0xFFFFD700, // 14: gold
+        0xFFAA77FF, // 15: lavender
+    };
+    public static final int ICON_W = 16;
+    public static final int ICON_H = 16;
+    public static final int ICON_BYTES = ICON_W * ICON_H; // 256
 
     // ── Dye swatches ──────────────────────────────────────────────────────────
     private static final int[] DYE_COLORS = {
@@ -55,14 +75,12 @@ public class MirrorPlacementScreen extends Screen {
     private static final int SEC_PAD_Y  = 8;
     private static final int LABEL_H    = 16;
     private static final int INPUT_H    = 22;
-    private static final int GLYPH_COLS = 12;   // all 12 sigils in one row
-    private static final int GLYPH_GAP  = 4;
-    private static final int GLYPH_SIZE = (PANEL_W - SEC_PAD_X * 2 - (GLYPH_COLS - 1) * GLYPH_GAP) / GLYPH_COLS; // 24
     private static final int PRIV_H     = 26;
     private static final int PRIV_GAP   = 3;
     private static final int SWATCH_GAP = 2;
     private static final int SWATCH_SZ  = (PANEL_W - SEC_PAD_X * 2 - 15 * SWATCH_GAP) / 16; // ~18
     private static final int DESC_H     = 40;
+    private static final int ICON_EDITOR_H = 48 + 4 + 10; // 16x16 grid at 3px + gap + palette
     private static final int TOGGLE_H   = 24;
     private static final int PREVIEW_H  = 44;
     private static final int FOOTER_H   = 30;
@@ -74,7 +92,10 @@ public class MirrorPlacementScreen extends Screen {
     private final int worldX, worldY, worldZ;
 
     private String name;
-    private int sigilIndex = 1; // default ◈
+    private byte[] iconPixels = new byte[256];
+    private int iconSelectedColor = 1;
+    private boolean iconDragging = false;
+    private int iconEditorX, iconEditorY;
     private int privacyLevel = 0; // 0=LOCKED
     private int dyeColorIndex = -1; // -1 = none
     private String description = "";
@@ -105,12 +126,16 @@ public class MirrorPlacementScreen extends Screen {
         totalH = computeTotalH();
         pl = (width - PANEL_W) / 2;
         pt = (height - totalH) / 2;
+        // Compute icon editor position: section starts after header+meta+name sections
+        int iconSectionTop = pt + HEADER_H + META_H + (SEC_PAD_Y + LABEL_H + INPUT_H + SEC_PAD_Y) + SEC_PAD_Y + LABEL_H;
+        iconEditorX = pl + SEC_PAD_X;
+        iconEditorY = iconSectionTop;
     }
 
     private int computeTotalH() {
         int h = HEADER_H + META_H;
         h += SEC_PAD_Y + LABEL_H + INPUT_H  + SEC_PAD_Y; // name
-        h += SEC_PAD_Y + LABEL_H + GLYPH_SIZE + SEC_PAD_Y; // sigil (1 row)
+        h += SEC_PAD_Y + LABEL_H + ICON_EDITOR_H + SEC_PAD_Y; // icon editor
         h += SEC_PAD_Y + LABEL_H + PRIV_H   + SEC_PAD_Y; // privacy
         h += SEC_PAD_Y + LABEL_H + SWATCH_SZ + SEC_PAD_Y; // tint
         h += SEC_PAD_Y + LABEL_H + DESC_H   + SEC_PAD_Y; // description
@@ -131,7 +156,7 @@ public class MirrorPlacementScreen extends Screen {
         cur += HEADER_H;
         cur = drawMeta(g, cur);
         cur = drawNameSection(g, cur);
-        cur = drawSigilSection(g, cur);
+        cur = drawIconSection(g, cur);
         cur = drawPrivacySection(g, cur);
         cur = drawTintSection(g, cur);
         cur = drawDescSection(g, cur);
@@ -228,29 +253,48 @@ public class MirrorPlacementScreen extends Screen {
         return sectionEnd(g, top);
     }
 
-    // ── Section 2: Sigil ─────────────────────────────────────────────────────
+    // ── Section 2: Icon ───────────────────────────────────────────────────────
 
-    private int drawSigilSection(GuiGraphics g, int top) {
+    private int drawIconSection(GuiGraphics g, int top) {
         top = sectionStart(g, top);
-        drawLabel(g, pl + SEC_PAD_X, top, "Sigil", "Choose 1", false);
+        drawLabel(g, pl + SEC_PAD_X, top, "Icon", "Draw your icon", false);
         top += LABEL_H;
 
-        int gx = pl + SEC_PAD_X;
-        for (int i = 0; i < SIGILS.length; i++) {
-            int cx  = gx + i * (GLYPH_SIZE + GLYPH_GAP);
-            boolean sel = i == sigilIndex;
-            int bg  = sel ? 0x26D4AF37 : 0x66000000;
-            int bor = sel ? DC_GOLD : DC_BORDER_DIM;
-            g.fill(cx, top, cx + GLYPH_SIZE, top + GLYPH_SIZE, bg);
-            hLine(g, cx, cx + GLYPH_SIZE - 1, top,                bor);
-            hLine(g, cx, cx + GLYPH_SIZE - 1, top + GLYPH_SIZE - 1, bor);
-            vLine(g, cx,               top, top + GLYPH_SIZE - 1, bor);
-            vLine(g, cx + GLYPH_SIZE - 1, top, top + GLYPH_SIZE - 1, bor);
-            int tc = sel ? DC_GOLD : DC_MUTED;
-            int sw = font.width(SIGILS[i]);
-            g.drawString(font, SIGILS[i], cx + (GLYPH_SIZE - sw) / 2, top + (GLYPH_SIZE - 8) / 2, tc, false);
+        // Update iconEditorY based on actual render position
+        iconEditorY = top;
+        iconEditorX = pl + SEC_PAD_X;
+
+        // Draw grid (16x16 cells at 3px each)
+        for (int py2 = 0; py2 < 16; py2++) {
+            for (int px2 = 0; px2 < 16; px2++) {
+                int col = ICON_PALETTE[iconPixels[py2 * 16 + px2] & 0xFF];
+                int cx2 = iconEditorX + px2 * 3;
+                int cy2 = iconEditorY + py2 * 3;
+                if ((col >>> 24) == 0) {
+                    g.fill(cx2, cy2, cx2 + 3, cy2 + 3, ((px2 + py2) % 2 == 0) ? 0xFF2A2A3A : 0xFF222232);
+                } else {
+                    g.fill(cx2, cy2, cx2 + 3, cy2 + 3, col);
+                }
+            }
         }
-        top += GLYPH_SIZE;
+        // Border
+        g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX + 49, iconEditorY, DC_BORDER_DIM);
+        g.fill(iconEditorX - 1, iconEditorY + 48, iconEditorX + 49, iconEditorY + 49, DC_BORDER_DIM);
+        g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX, iconEditorY + 49, DC_BORDER_DIM);
+        g.fill(iconEditorX + 48, iconEditorY - 1, iconEditorX + 49, iconEditorY + 49, DC_BORDER_DIM);
+
+        // Palette row
+        int pal16Y = iconEditorY + 52;
+        int pal16X = pl + SEC_PAD_X;
+        for (int c = 0; c < 16; c++) {
+            int sc = pal16X + c * 19;
+            int col2 = ICON_PALETTE[c];
+            if (c == 0) col2 = 0xFF2A2A3A;
+            if (c == iconSelectedColor) g.fill(sc - 1, pal16Y - 1, sc + 11, pal16Y + 11, 0xFFFFFFFF);
+            g.fill(sc, pal16Y, sc + 10, pal16Y + 10, col2);
+        }
+
+        top += ICON_EDITOR_H;
         return sectionEnd(g, top);
     }
 
@@ -395,7 +439,7 @@ public class MirrorPlacementScreen extends Screen {
         hLine(g, pl, pl + PANEL_W - 1, top,              DC_BORDER_DIM);
         hLine(g, pl, pl + PANEL_W - 1, top + PREVIEW_H - 1, DC_BORDER_DIM);
 
-        // Glyph box 36×36
+        // Icon preview box 36x36 (icon centered within)
         int glyphColor = dyeColorIndex >= 0 ? DYE_COLORS[dyeColorIndex] : DC_GOLD;
         int gx = pl + 12, gy = top + (PREVIEW_H - 36) / 2;
         g.fill(gx, gy, gx + 36, gy + 36, 0x66000000);
@@ -403,9 +447,21 @@ public class MirrorPlacementScreen extends Screen {
         hLine(g, gx, gx + 35, gy + 35, glyphColor & 0x66FFFFFF | 0x66000000);
         vLine(g, gx,      gy, gy + 35, glyphColor & 0x66FFFFFF | 0x66000000);
         vLine(g, gx + 35, gy, gy + 35, glyphColor & 0x66FFFFFF | 0x66000000);
-        String sig = SIGILS[sigilIndex];
-        int sigW = font.width(sig);
-        g.drawString(font, sig, gx + (36 - sigW) / 2, gy + 14, glyphColor, false);
+        // Draw icon at 1:1 scale centered in 36x36 box
+        int iconOffX = gx + (36 - 16) / 2;
+        int iconOffY = gy + (36 - 16) / 2;
+        boolean hasAnyPixel = false;
+        for (byte b : iconPixels) if (b != 0) { hasAnyPixel = true; break; }
+        if (hasAnyPixel) {
+            for (int py = 0; py < 16; py++) {
+                for (int px = 0; px < 16; px++) {
+                    int col = ICON_PALETTE[iconPixels[py * 16 + px] & 0xFF];
+                    if ((col >>> 24) != 0) {
+                        g.fill(iconOffX + px, iconOffY + py, iconOffX + px + 1, iconOffY + py + 1, col);
+                    }
+                }
+            }
+        }
 
         // Name + meta text
         int textX = gx + 36 + 10;
@@ -531,21 +587,17 @@ public class MirrorPlacementScreen extends Screen {
         }
         cur = nameBot + SEC_PAD_Y;
 
-        // Sigil strip clicks (single row)
-        int sigilTop = cur + SEC_PAD_Y + LABEL_H;
-        int sigilBot = sigilTop + GLYPH_SIZE;
-        if (my >= sigilTop && my <= sigilBot) {
-            int gx = pl + SEC_PAD_X;
-            for (int i = 0; i < SIGILS.length; i++) {
-                int cx = gx + i * (GLYPH_SIZE + GLYPH_GAP);
-                if (mx >= cx && mx <= cx + GLYPH_SIZE) {
-                    sigilIndex = i;
-                    nameActive = false; descActive = false;
-                    return true;
-                }
+        // Icon editor clicks
+        int iconTop = cur + SEC_PAD_Y + LABEL_H;
+        int iconBot = iconTop + ICON_EDITOR_H;
+        if (my >= iconTop && my <= iconBot) {
+            if (handleIconEditPlacement(mx, my, button)) {
+                iconDragging = true;
+                nameActive = false; descActive = false;
+                return true;
             }
         }
-        cur = sigilBot + SEC_PAD_Y;
+        cur = iconBot + SEC_PAD_Y;
 
         // Privacy pills
         int privTop = cur + SEC_PAD_Y + LABEL_H;
@@ -628,6 +680,37 @@ public class MirrorPlacementScreen extends Screen {
         return super.mouseClicked(mx, my, button);
     }
 
+    private boolean handleIconEditPlacement(double mouseX, double mouseY, int button) {
+        // Grid
+        int px2 = ((int)mouseX - iconEditorX) / 3;
+        int py2 = ((int)mouseY - iconEditorY) / 3;
+        if (px2 >= 0 && px2 < 16 && py2 >= 0 && py2 < 16) {
+            if (button == 0) iconPixels[py2 * 16 + px2] = (byte) iconSelectedColor;
+            else if (button == 1) iconPixels[py2 * 16 + px2] = 0;
+            return true;
+        }
+        // Palette
+        int pal16Y = iconEditorY + 52;
+        int pal16X = pl + SEC_PAD_X;
+        if (mouseY >= pal16Y && mouseY < pal16Y + 10) {
+            int c = ((int)mouseX - pal16X) / 19;
+            if (c >= 0 && c < 16) { iconSelectedColor = c; return true; }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        if (iconDragging) { handleIconEditPlacement(mouseX, mouseY, button); return true; }
+        return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        iconDragging = false;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // ESC
@@ -670,7 +753,7 @@ public class MirrorPlacementScreen extends Screen {
 
     private void sendActivate() {
         MirrorsNetwork.sendToServer(new ServerboundInscribeMirrorPacket(
-                mirrorPos, name.strip(), sigilIndex, privacyLevel, dyeColorIndex, description, pocketBound));
+                mirrorPos, name.strip(), iconPixels, privacyLevel, dyeColorIndex, description, pocketBound));
         onClose();
     }
 }

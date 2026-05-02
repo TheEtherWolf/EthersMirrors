@@ -28,6 +28,7 @@ public class ClientboundOpenMirrorManagementPacket {
     public final int pocketCurrentSize;
     public final int pocketMaxSize;
     public final boolean warpTargetLocked;
+    public final byte[] iconPixels;
 
     public ClientboundOpenMirrorManagementPacket(
             UUID mirrorId, UUID ownerUUID, String mirrorName, String tierName, String typeName,
@@ -59,6 +60,15 @@ public class ClientboundOpenMirrorManagementPacket {
             BlockPos pos, String dimensionName, PermissionData.AccessMode accessMode,
             List<PlayerEntry> allowList, List<PlayerEntry> blockList, List<String> appliedUpgrades,
             int pocketCurrentSize, int pocketMaxSize, boolean warpTargetLocked) {
+        this(mirrorId, ownerUUID, mirrorName, tierName, typeName, pos, dimensionName,
+                accessMode, allowList, blockList, appliedUpgrades, pocketCurrentSize, pocketMaxSize, warpTargetLocked, new byte[256]);
+    }
+
+    public ClientboundOpenMirrorManagementPacket(
+            UUID mirrorId, UUID ownerUUID, String mirrorName, String tierName, String typeName,
+            BlockPos pos, String dimensionName, PermissionData.AccessMode accessMode,
+            List<PlayerEntry> allowList, List<PlayerEntry> blockList, List<String> appliedUpgrades,
+            int pocketCurrentSize, int pocketMaxSize, boolean warpTargetLocked, byte[] iconPixels) {
         this.mirrorId = mirrorId;
         this.ownerUUID = ownerUUID;
         this.mirrorName = mirrorName;
@@ -73,6 +83,7 @@ public class ClientboundOpenMirrorManagementPacket {
         this.pocketCurrentSize = pocketCurrentSize;
         this.pocketMaxSize = pocketMaxSize;
         this.warpTargetLocked = warpTargetLocked;
+        this.iconPixels = iconPixels != null ? iconPixels : new byte[256];
     }
 
     public static void encode(ClientboundOpenMirrorManagementPacket msg, FriendlyByteBuf buf) {
@@ -93,6 +104,7 @@ public class ClientboundOpenMirrorManagementPacket {
         buf.writeInt(msg.pocketCurrentSize);
         buf.writeInt(msg.pocketMaxSize);
         buf.writeBoolean(msg.warpTargetLocked);
+        buf.writeBytes(msg.iconPixels != null ? msg.iconPixels : new byte[256]);
     }
 
     public static ClientboundOpenMirrorManagementPacket decode(FriendlyByteBuf buf) {
@@ -120,8 +132,10 @@ public class ClientboundOpenMirrorManagementPacket {
         int pocketCurrentSize = buf.readInt();
         int pocketMaxSize = buf.readInt();
         boolean warpTargetLocked = buf.readBoolean();
+        byte[] iconPixels = new byte[256];
+        buf.readBytes(iconPixels);
         return new ClientboundOpenMirrorManagementPacket(mirrorId, ownerUUID, mirrorName, tierName, typeName,
-                pos, dimensionName, accessMode, allowList, blockList, appliedUpgrades, pocketCurrentSize, pocketMaxSize, warpTargetLocked);
+                pos, dimensionName, accessMode, allowList, blockList, appliedUpgrades, pocketCurrentSize, pocketMaxSize, warpTargetLocked, iconPixels);
     }
 
     public static void handle(ClientboundOpenMirrorManagementPacket msg, Supplier<NetworkEvent.Context> ctx) {

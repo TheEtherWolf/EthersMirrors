@@ -296,7 +296,8 @@ public class ServerboundOpenMirrorPacket {
                         signalStrength,
                         entry.name,
                         isFavorite,
-                        folderName
+                        folderName,
+                        entry.iconPixels
                 ));
             }
 

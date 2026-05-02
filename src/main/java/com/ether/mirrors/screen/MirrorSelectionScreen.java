@@ -255,7 +255,7 @@ public class MirrorSelectionScreen extends Screen {
                                         old.mirrorId, old.ownerUUID, old.pos, old.dimensionName,
                                         old.tierName, old.typeName, old.ownerName, old.isOwn,
                                         old.inRange, old.signalStrength, old.mirrorName,
-                                        !old.isFavorite, old.folderName));
+                                        !old.isFavorite, old.folderName, old.iconPixels));
                                 break;
                             }
                         }
@@ -483,7 +483,18 @@ public class MirrorSelectionScreen extends Screen {
                         pl+CX_IDX+(18-font.width(idxStr)), ty,
                         UITheme.withAlpha(DC_TEXT_MUTED, (int)(rowA * 0.65)), false);
 
-                // Col 1: Name · ◆ Owner (single line)
+                // Col 1: Icon + Name · ◆ Owner (single line)
+                // Draw mirror icon if non-empty
+                boolean iconDrawn = false;
+                if (info.iconPixels != null) {
+                    boolean hasAnyPixel = false;
+                    for (byte b : info.iconPixels) if (b != 0) { hasAnyPixel = true; break; }
+                    if (hasAnyPixel) {
+                        drawMirrorIcon(g, pl + CX_NAME + 2, ry + (ROW_H - 16) / 2, info.iconPixels, 1);
+                        iconDrawn = true;
+                    }
+                }
+                int nameOffsetX = iconDrawn ? 20 : 2;
                 String name    = mirrorDisplayName(info);
                 String nameStr = info.folderName.isEmpty() ? name : "["+info.folderName+"] "+name;
                 int nameColor  = dead ? UITheme.withAlpha(DC_TEXT_LAV, 0x8C)
@@ -493,11 +504,11 @@ public class MirrorSelectionScreen extends Screen {
                 // Compute available width for name vs owner
                 String ownerPart = " \u00b7 \u25c6" + info.ownerName;
                 int ownerW = font.width(ownerPart);
-                int nameAvail = 166 - 2 - ownerW;
+                int nameAvail = 166 - nameOffsetX - ownerW;
                 String nameDisplay = nameAvail > 20 ? truncate(nameStr, nameAvail)
                                                     : truncate(nameStr, 80);
-                g.drawString(font, nameDisplay, pl+CX_NAME+2, ty, nameColor, false);
-                int ownerX = pl+CX_NAME+2+font.width(nameDisplay);
+                g.drawString(font, nameDisplay, pl+CX_NAME+nameOffsetX, ty, nameColor, false);
+                int ownerX = pl+CX_NAME+nameOffsetX+font.width(nameDisplay);
                 // " · " separator in muted
                 g.drawString(font, " \u00b7 ", ownerX, ty, UITheme.withAlpha(DC_TEXT_MUTED, 0x80), false);
                 ownerX += font.width(" \u00b7 ");
@@ -800,6 +811,17 @@ public class MirrorSelectionScreen extends Screen {
     }
 
     // ── Drawing helpers ───────────────────────────────────────────────────────
+
+    private void drawMirrorIcon(GuiGraphics g, int x, int y, byte[] pixels, int scale) {
+        if (pixels == null || pixels.length < 256) return;
+        for (int py = 0; py < 16; py++) {
+            for (int px = 0; px < 16; px++) {
+                int col = MirrorPlacementScreen.ICON_PALETTE[pixels[py * 16 + px] & 0xFF];
+                if ((col >>> 24) == 0) continue; // transparent: skip
+                g.fill(x + px * scale, y + py * scale, x + (px + 1) * scale, y + (py + 1) * scale, col);
+            }
+        }
+    }
 
     private void drawCornerBracket(GuiGraphics g, int x, int y, boolean flipH, boolean flipV) {
         int sz = 10, th = 1;

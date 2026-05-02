@@ -19,18 +19,18 @@ public class ServerboundInscribeMirrorPacket {
 
     private final BlockPos mirrorPos;
     private final String name;       // max 32
-    private final int sigilIndex;    // 0-11
+    private final byte[] iconPixels; // 256 bytes, 16x16 palette indices
     private final int privacyLevel;  // 0=LOCKED, 1=VIEW, 2=CALL, 3=ENTER
     private final int dyeColor;      // 0-15, or -1 for none
     private final String description; // max 128
     private final boolean pocketBound; // only meaningful for POCKET-type mirrors
 
-    public ServerboundInscribeMirrorPacket(BlockPos mirrorPos, String name, int sigilIndex,
+    public ServerboundInscribeMirrorPacket(BlockPos mirrorPos, String name, byte[] iconPixels,
                                            int privacyLevel, int dyeColor, String description,
                                            boolean pocketBound) {
         this.mirrorPos = mirrorPos;
         this.name = name;
-        this.sigilIndex = sigilIndex;
+        this.iconPixels = iconPixels != null && iconPixels.length == 256 ? iconPixels : new byte[256];
         this.privacyLevel = privacyLevel;
         this.dyeColor = dyeColor;
         this.description = description;
@@ -40,7 +40,7 @@ public class ServerboundInscribeMirrorPacket {
     public static void encode(ServerboundInscribeMirrorPacket msg, FriendlyByteBuf buf) {
         buf.writeBlockPos(msg.mirrorPos);
         buf.writeUtf(msg.name, 32);
-        buf.writeByte(msg.sigilIndex);
+        buf.writeBytes(msg.iconPixels != null ? msg.iconPixels : new byte[256]);
         buf.writeByte(msg.privacyLevel);
         buf.writeByte(msg.dyeColor + 1); // shift by 1 so -1 → 0 on wire
         buf.writeUtf(msg.description, 128);
@@ -50,12 +50,13 @@ public class ServerboundInscribeMirrorPacket {
     public static ServerboundInscribeMirrorPacket decode(FriendlyByteBuf buf) {
         BlockPos pos = buf.readBlockPos();
         String name = buf.readUtf(32);
-        int sigil = buf.readByte() & 0xFF;
+        byte[] iconPixels = new byte[256];
+        buf.readBytes(iconPixels);
         int privacy = buf.readByte() & 0xFF;
         int dye = (buf.readByte() & 0xFF) - 1; // un-shift
         String desc = buf.readUtf(128);
         boolean pocket = buf.readBoolean();
-        return new ServerboundInscribeMirrorPacket(pos, name, sigil, privacy, dye, desc, pocket);
+        return new ServerboundInscribeMirrorPacket(pos, name, iconPixels, privacy, dye, desc, pocket);
     }
 
     public static void handle(ServerboundInscribeMirrorPacket msg, Supplier<NetworkEvent.Context> ctx) {
@@ -76,20 +77,20 @@ public class ServerboundInscribeMirrorPacket {
             if (name.isEmpty()) return;
             if (name.length() > 32) name = name.substring(0, 32);
             String desc = msg.description.length() > 128 ? msg.description.substring(0, 128) : msg.description;
-            int sigil = Math.max(0, Math.min(11, msg.sigilIndex));
             int privacy = Math.max(0, Math.min(3, msg.privacyLevel));
             int dye = (msg.dyeColor < -1 || msg.dyeColor > 15) ? -1 : msg.dyeColor;
 
             mirrorBE.setMirrorName(name);
-            mirrorBE.setSigilIndex(sigil);
+            mirrorBE.setIconPixels(msg.iconPixels);
             mirrorBE.setDyeColor(dye);
             mirrorBE.setDescription(desc);
             mirrorBE.setActivated(true);
             mirrorBE.setChanged();
 
-            // Update the network data entry with the chosen name
+            // Update the network data entry with the chosen name and icon
             MirrorNetworkData networkData = MirrorNetworkData.get(player.server);
             networkData.updateMirrorName(mirrorBE.getMirrorId(), name);
+            networkData.updateMirrorIcon(mirrorBE.getMirrorId(), msg.iconPixels);
 
             // Set per-mirror access mode: LOCKED → PRIVATE, VIEW/CALL/ENTER → PUBLIC
             PermissionData permData = PermissionData.get(player.server);

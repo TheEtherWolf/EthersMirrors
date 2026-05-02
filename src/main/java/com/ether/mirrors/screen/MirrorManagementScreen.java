@@ -8,6 +8,7 @@ import com.ether.mirrors.network.packets.ServerboundOpenMirrorManagementPacket;
 import com.ether.mirrors.network.packets.ServerboundRemoveUpgradePacket;
 import com.ether.mirrors.network.packets.ServerboundSetMirrorAccessModePacket;
 import com.ether.mirrors.network.packets.ServerboundSetMirrorOverridePacket;
+import com.ether.mirrors.network.packets.ServerboundSaveIconPacket;
 import com.ether.mirrors.network.packets.ServerboundSetMirrorFolderPacket;
 import com.ether.mirrors.network.packets.ServerboundSetPocketThemePacket;
 import com.ether.mirrors.network.packets.ServerboundUpgradeMirrorTierPacket;
@@ -44,7 +45,7 @@ public class MirrorManagementScreen extends Screen {
     private static final int PANEL_W  = 400;
     private static final int HEADER_H = 26;
     private static final int TAB_H    = 18;
-    private static final int CONTENT_H = 230;
+    private static final int CONTENT_H = 310;
     private static final int FOOTER_H = 28;
     private static final int PANEL_H  = HEADER_H + TAB_H + 4 + CONTENT_H + FOOTER_H;
 
@@ -60,6 +61,12 @@ public class MirrorManagementScreen extends Screen {
     // Info tab widgets
     private EditBox folderField;
 
+    // Icon editor state
+    private byte[] iconPixels = new byte[256];
+    private int iconSelectedColor = 1;
+    private boolean iconDragging = false;
+    private int iconEditorX, iconEditorY;
+
     public MirrorManagementScreen(ClientboundOpenMirrorManagementPacket data) {
         super(Component.literal("Mirror Management"));
         this.mirrorId = data.mirrorId;
@@ -73,6 +80,8 @@ public class MirrorManagementScreen extends Screen {
         this.blockList = new ArrayList<>(data.blockList);
         this.appliedUpgrades = new ArrayList<>(data.appliedUpgrades);
         this.warpTargetLocked = data.warpTargetLocked;
+        byte[] p = data.iconPixels;
+        this.iconPixels = (p != null && p.length == 256) ? p.clone() : new byte[256];
     }
 
     private int panelLeft()    { return (this.width  - PANEL_W) / 2; }
@@ -315,8 +324,18 @@ public class MirrorManagementScreen extends Screen {
             int bx = pl + 8;
             int ct2 = contentTop();
 
-            // Folder field — right below the "Folder:" label rendered at ct+82
-            int folderFieldY = ct2 + 92;
+            // Compute icon editor position
+            iconEditorX = pl + (PANEL_W - 48) / 2; // centered
+            iconEditorY = ct2 + 14;
+
+            // Save icon button
+            addRenderableWidget(MirrorButton.teal(pl + PANEL_W - 80, ct2 + 8, 72, 14,
+                    Component.literal("Save Icon"), b -> {
+                        MirrorsNetwork.sendToServer(new ServerboundSaveIconPacket(mirrorPos, iconPixels));
+                    }));
+
+            // Folder field — shifted down by 80px from original ct2+92 -> ct2+172
+            int folderFieldY = ct2 + 172;
             folderField = new EditBox(this.font, pl + 8, folderFieldY, 180, 14,
                     Component.literal("Folder"));
             folderField.setMaxLength(32);
@@ -330,8 +349,8 @@ public class MirrorManagementScreen extends Screen {
                         folderField.setValue("");
                     }));
 
-            // Rename + Upgrade Tier — below folder row
-            int actionY = ct2 + 114;
+            // Rename + Upgrade Tier — shifted down by 80px: ct2+114 -> ct2+194
+            int actionY = ct2 + 194;
             addRenderableWidget(MirrorButton.gold(bx, actionY, 90, 16,
                     Component.literal("Rename"), b -> {
                         this.minecraft.setScreen(new MirrorNamingScreen(mirrorPos, mirrorName, true).withContext(tierName, typeName));
@@ -365,12 +384,12 @@ public class MirrorManagementScreen extends Screen {
                                 Component.literal("Remove the mirror block and add it to your inventory")));
             }
 
-            // Theme / Time / Weather — only for pocket mirrors
+            // Theme / Time / Weather — only for pocket mirrors, shifted down by 80px
             if ("pocket".equals(typeName)) {
                 int themeW = 70, themeGap = 4;
                 int themeRowX = pl + 8;
 
-                int themeRowY = ct2 + 136;
+                int themeRowY = ct2 + 216;
                 String[] themeIds = {"deepslate", "nether", "end", "mushroom", "crystal"};
                 String[] themeLabels = {"Deepslate", "Nether", "End", "Mushroom", "Crystal"};
                 for (int ti = 0; ti < themeIds.length; ti++) {
@@ -380,7 +399,7 @@ public class MirrorManagementScreen extends Screen {
                                     MirrorsNetwork.sendToServer(new ServerboundSetPocketThemePacket(themeId))));
                 }
 
-                int timeRowY = ct2 + 154;
+                int timeRowY = ct2 + 234;
                 int[] times = {1000, 13000, 18000, -1};
                 String[] timeLabels = {"Day", "Night", "Midnight", "Unlock"};
                 for (int ti = 0; ti < times.length; ti++) {
@@ -390,7 +409,7 @@ public class MirrorManagementScreen extends Screen {
                                     MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundSetPocketTimePacket(t))));
                 }
 
-                int weatherRowY = ct2 + 172;
+                int weatherRowY = ct2 + 252;
                 String[] weatherIds = {"clear", "rain", "thunder", "normal"};
                 String[] weatherLabels = {"Clear", "Rain", "Thunder", "Normal"};
                 for (int ti = 0; ti < weatherIds.length; ti++) {
@@ -401,7 +420,7 @@ public class MirrorManagementScreen extends Screen {
                 }
 
                 // Expand Pocket buttons (permanent upgrade with material cost)
-                int expandRowY = ct2 + 192;
+                int expandRowY = ct2 + 272;
                 int[] expandAmounts = {16, 32, 64, 128};
                 String[] expandLabels = {"+16 (8 Planks)", "+32 (8 Iron)", "+64 (4 Diamond)", "+128 (2 Netherite)"};
                 for (int ti = 0; ti < expandAmounts.length; ti++) {
@@ -537,20 +556,57 @@ public class MirrorManagementScreen extends Screen {
 
             g.drawString(font, "Dimension:", labelX, iy, UITheme.TEXT_MUTED, false);
             g.drawString(font, formatDimName(dimensionName), valueX, iy, UITheme.TEXT_WHITE, false);
-            iy += lineH + 4;
 
-            // Folder label — field widget is at ct+92
-            g.drawString(font, "Folder:", labelX, iy, UITheme.TEXT_MUTED, false);
-            int folderFieldY = ct + 92;
+            // Draw "Icon" label
+            g.drawString(font, "Icon:", labelX, ct + 10, UITheme.TEXT_MUTED, false);
+
+            // Draw icon editor grid
+            for (int py = 0; py < 16; py++) {
+                for (int px = 0; px < 16; px++) {
+                    int color = MirrorPlacementScreen.ICON_PALETTE[iconPixels[py * 16 + px] & 0xFF];
+                    int cx2 = iconEditorX + px * 3;
+                    int cy2 = iconEditorY + py * 3;
+                    if ((color >>> 24) == 0) {
+                        int cb = ((px + py) % 2 == 0) ? 0xFF333344 : 0xFF2A2A3A;
+                        g.fill(cx2, cy2, cx2 + 3, cy2 + 3, cb);
+                    } else {
+                        g.fill(cx2, cy2, cx2 + 3, cy2 + 3, color);
+                    }
+                }
+            }
+            // Grid border
+            g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX + 49, iconEditorY, UITheme.BORDER_MID);
+            g.fill(iconEditorX - 1, iconEditorY + 48, iconEditorX + 49, iconEditorY + 49, UITheme.BORDER_MID);
+            g.fill(iconEditorX - 1, iconEditorY - 1, iconEditorX, iconEditorY + 49, UITheme.BORDER_MID);
+            g.fill(iconEditorX + 48, iconEditorY - 1, iconEditorX + 49, iconEditorY + 49, UITheme.BORDER_MID);
+
+            // Palette row: 16 swatches at 10x10 with 1px gap, starting below editor
+            int paletteY = iconEditorY + 52;
+            int paletteX = pl + (PANEL_W - (16 * 11 - 1)) / 2;
+            for (int c = 0; c < 16; c++) {
+                int sc = paletteX + c * 11;
+                int col = MirrorPlacementScreen.ICON_PALETTE[c];
+                if (c == 0) col = 0xFF333344; // transparent shown as dark
+                if (c == iconSelectedColor) {
+                    g.fill(sc - 1, paletteY - 1, sc + 11, paletteY + 11, 0xFFFFFFFF);
+                }
+                g.fill(sc, paletteY, sc + 10, paletteY + 10, col);
+            }
+            // Selected color label
+            g.drawString(font, "Selected: " + (iconSelectedColor == 0 ? "eraser" : "color " + iconSelectedColor),
+                    labelX, paletteY + 13, UITheme.TEXT_MUTED, false);
+
+            // Folder label — field widget is at ct+172
+            g.drawString(font, "Folder:", labelX, ct + 162, UITheme.TEXT_MUTED, false);
+            int folderFieldY = ct + 172;
             g.fill(pl + 7, folderFieldY - 2, pl + 189, folderFieldY + 14, UITheme.BORDER_ACCENT);
             g.fill(pl + 8, folderFieldY - 1, pl + 188, folderFieldY + 13, 0xFF060022);
 
-
             // Expand Pocket label (pocket mirrors only) + Upgrade cost below actions row
             if ("pocket".equals(typeName)) {
-                g.drawString(font, "Expand Pocket:", labelX, ct + 184, UITheme.TEXT_LAVENDER, false);
+                g.drawString(font, "Expand Pocket:", labelX, ct + 264, UITheme.TEXT_LAVENDER, false);
             }
-            int costY = "pocket".equals(typeName) ? ct + 210 : ct + 134;
+            int costY = "pocket".equals(typeName) ? ct + 290 : ct + 214;
             MirrorTier tier = null;
             for (MirrorTier t : MirrorTier.values()) {
                 if (t.getName().equals(tierName)) { tier = t; break; }
@@ -611,5 +667,42 @@ public class MirrorManagementScreen extends Screen {
             case "netherite" -> 6;
             default -> 3;
         };
+    }
+
+    private boolean handleIconEdit(double mouseX, double mouseY, int button) {
+        if (activeTab != 2) return false;
+        int px = (int)(mouseX - iconEditorX) / 3;
+        int py = (int)(mouseY - iconEditorY) / 3;
+        if (px >= 0 && px < 16 && py >= 0 && py < 16) {
+            if (button == 0) iconPixels[py * 16 + px] = (byte) iconSelectedColor;
+            else if (button == 1) iconPixels[py * 16 + px] = 0;
+            return true;
+        }
+        // Palette click
+        int paletteY = iconEditorY + 52;
+        int paletteX = panelLeft() + (PANEL_W - (16 * 11 - 1)) / 2;
+        if (mouseY >= paletteY && mouseY < paletteY + 10) {
+            int c = (int)(mouseX - paletteX) / 11;
+            if (c >= 0 && c < 16) { iconSelectedColor = c; return true; }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (handleIconEdit(mouseX, mouseY, button)) { iconDragging = true; return true; }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        if (iconDragging) { handleIconEdit(mouseX, mouseY, button); return true; }
+        return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        iconDragging = false;
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 }

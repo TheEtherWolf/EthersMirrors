@@ -101,7 +101,8 @@ public class ServerboundOpenHandheldMirrorPacket {
                         entry.mirrorId, entry.ownerUUID, entry.pos,
                         entry.dimension.location().toString(),
                         entry.tier.getName(), entry.type.getName(),
-                        ownerName, isOwn, inRange, signal, entry.name));
+                        ownerName, isOwn, inRange, signal, entry.name,
+                        false, "", entry.iconPixels));
             }
 
             // Include cooldown for handheld mirrors (HANDHELD_MIRROR_ID tracks per-hand cooldowns)

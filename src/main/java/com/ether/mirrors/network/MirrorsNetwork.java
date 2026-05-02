@@ -295,6 +295,12 @@ public class MirrorsNetwork {
                 ServerboundInscribeMirrorPacket::encode, ServerboundInscribeMirrorPacket::decode,
                 ServerboundInscribeMirrorPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // Icon editor
+        CHANNEL.registerMessage(id++, ServerboundSaveIconPacket.class,
+                ServerboundSaveIconPacket::encode, ServerboundSaveIconPacket::decode,
+                ServerboundSaveIconPacket::handle,
+                java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
     }
 
     /**

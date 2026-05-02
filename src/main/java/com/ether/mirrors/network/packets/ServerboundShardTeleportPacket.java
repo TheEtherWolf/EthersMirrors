@@ -85,8 +85,21 @@ public class ServerboundShardTeleportPacket {
                 return;
             }
 
-            // Cooldown — Mirror Shards use Iron tier as the baseline, tracked per bound mirror
-            int cooldownSecs = RangeHelper.getCooldownSecondsForTier(MirrorTier.IRON);
+            // Cooldown — use the actual target mirror's tier
+            MirrorTier shardCooldownTier = target.tier != null ? target.tier : MirrorTier.IRON;
+            int cooldownSecs = RangeHelper.getCooldownSecondsForTier(shardCooldownTier);
+            // Apply COOLDOWN_REDUCER if the target mirror has it
+            if (target.pos != null) {
+                ServerLevel shardCheckLevel = player.server.getLevel(target.dimension);
+                if (shardCheckLevel != null && shardCheckLevel.isLoaded(target.pos)) {
+                    net.minecraft.world.level.block.entity.BlockEntity shardBE = shardCheckLevel.getBlockEntity(target.pos);
+                    if (shardBE instanceof com.ether.mirrors.block.entity.MirrorBlockEntity shardMirrorBE
+                            && shardMirrorBE.hasUpgrade(com.ether.mirrors.item.MirrorUpgradeType.COOLDOWN_REDUCER)) {
+                        int pct = com.ether.mirrors.MirrorsConfig.COOLDOWN_REDUCER_PERCENT.get();
+                        cooldownSecs = (int)(cooldownSecs * (1.0 - pct / 100.0));
+                    }
+                }
+            }
             long cooldownRemainingMs = networkData.getCooldownRemainingMs(player.getUUID(), msg.boundMirrorId, cooldownSecs);
             if (cooldownRemainingMs > 0) {
                 double remaining = cooldownRemainingMs / 1000.0;

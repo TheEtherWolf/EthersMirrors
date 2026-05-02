@@ -46,6 +46,7 @@ public class MirrorNetworkData extends SavedData {
         /** Mutable — updated in-place by updateMirrorName() and updateMirrorPrivacyLock(). All other fields are immutable. */
         public String name;
         public volatile boolean privacyLocked;
+        public byte[] iconPixels = new byte[256];
 
         public MirrorEntry(UUID mirrorId, UUID ownerUUID, BlockPos pos, ResourceKey<Level> dimension,
                            MirrorTier tier, MirrorType type, Direction facing, String name, boolean privacyLocked) {
@@ -107,6 +108,14 @@ public class MirrorNetworkData extends SavedData {
         MirrorEntry entry = mirrors.get(mirrorId);
         if (entry != null) {
             entry.name = name != null ? name : "";
+            setDirty();
+        }
+    }
+
+    public void updateMirrorIcon(UUID mirrorId, byte[] pixels) {
+        MirrorEntry entry = mirrors.get(mirrorId);
+        if (entry != null && pixels != null && pixels.length == 256) {
+            entry.iconPixels = pixels.clone();
             setDirty();
         }
     }
@@ -265,6 +274,11 @@ public class MirrorNetworkData extends SavedData {
             mirrorTag.putString("Facing", entry.facing.getName());
             mirrorTag.putString("Name", entry.name);
             if (entry.privacyLocked) mirrorTag.putBoolean("PrivacyLocked", true);
+            if (entry.iconPixels != null && entry.iconPixels.length == 256) {
+                boolean hasIcon = false;
+                for (byte b : entry.iconPixels) { if (b != 0) { hasIcon = true; break; } }
+                if (hasIcon) mirrorTag.putByteArray("Icon", entry.iconPixels);
+            }
             mirrorList.add(mirrorTag);
         }
         tag.put("Mirrors", mirrorList);
@@ -371,6 +385,10 @@ public class MirrorNetworkData extends SavedData {
             if (tier != null && type != null) {
                 data.addMirror(mirrorId, ownerUUID, pos, dimension, tier, type, facing, name);
                 if (privacyLocked) data.mirrors.get(mirrorId).privacyLocked = true;
+                if (mirrorTag.contains("Icon")) {
+                    byte[] p = mirrorTag.getByteArray("Icon");
+                    if (p.length == 256) data.mirrors.get(mirrorId).iconPixels = p;
+                }
             } else {
                 LOGGER.warn("[EthersMirrors] Skipping mirror entry for player {} — unrecognized tier '{}' or type '{}'",
                         ownerUUID, mirrorTag.getString("Tier"), mirrorTag.getString("Type"));

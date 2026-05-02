@@ -31,17 +31,26 @@ public class ClientboundMirrorListPacket {
         public final String mirrorName;
         public final boolean isFavorite;
         public final String folderName;
+        public final byte[] iconPixels;
 
         public MirrorInfo(UUID mirrorId, UUID ownerUUID, BlockPos pos, String dimensionName, String tierName,
                           String typeName, String ownerName, boolean isOwn, boolean inRange,
                           double signalStrength, String mirrorName) {
             this(mirrorId, ownerUUID, pos, dimensionName, tierName, typeName, ownerName,
-                    isOwn, inRange, signalStrength, mirrorName, false, "");
+                    isOwn, inRange, signalStrength, mirrorName, false, "", new byte[256]);
         }
 
         public MirrorInfo(UUID mirrorId, UUID ownerUUID, BlockPos pos, String dimensionName, String tierName,
                           String typeName, String ownerName, boolean isOwn, boolean inRange,
                           double signalStrength, String mirrorName, boolean isFavorite, String folderName) {
+            this(mirrorId, ownerUUID, pos, dimensionName, tierName, typeName, ownerName,
+                    isOwn, inRange, signalStrength, mirrorName, isFavorite, folderName, new byte[256]);
+        }
+
+        public MirrorInfo(UUID mirrorId, UUID ownerUUID, BlockPos pos, String dimensionName, String tierName,
+                          String typeName, String ownerName, boolean isOwn, boolean inRange,
+                          double signalStrength, String mirrorName, boolean isFavorite, String folderName,
+                          byte[] iconPixels) {
             this.mirrorId = mirrorId;
             this.ownerUUID = ownerUUID;
             this.pos = pos;
@@ -55,6 +64,7 @@ public class ClientboundMirrorListPacket {
             this.mirrorName = mirrorName != null ? mirrorName : "";
             this.isFavorite = isFavorite;
             this.folderName = folderName != null ? folderName : "";
+            this.iconPixels = iconPixels != null ? iconPixels : new byte[256];
         }
     }
 
@@ -107,6 +117,7 @@ public class ClientboundMirrorListPacket {
             buf.writeUtf(info.mirrorName);
             buf.writeBoolean(info.isFavorite);
             buf.writeUtf(info.folderName, 64);
+            buf.writeBytes(info.iconPixels != null ? info.iconPixels : new byte[256]);
         }
         buf.writeBoolean(msg.warpTargetMode);
         buf.writeLong(msg.cooldownRemainingMs);
@@ -135,12 +146,19 @@ public class ClientboundMirrorListPacket {
                     buf.readDouble(),
                     buf.readUtf(),
                     buf.readBoolean(),
-                    buf.readUtf(64)
+                    buf.readUtf(64),
+                    readIconPixels(buf)
             ));
         }
         boolean warpTargetMode = buf.readBoolean();
         long cooldownRemainingMs = buf.readLong();
         return new ClientboundMirrorListPacket(mirrors, sourcePos, sourceMirrorType, isHandheld, warpTargetMode, cooldownRemainingMs);
+    }
+
+    private static byte[] readIconPixels(FriendlyByteBuf buf) {
+        byte[] pixels = new byte[256];
+        buf.readBytes(pixels);
+        return pixels;
     }
 
     public static void handle(ClientboundMirrorListPacket msg, Supplier<NetworkEvent.Context> ctx) {

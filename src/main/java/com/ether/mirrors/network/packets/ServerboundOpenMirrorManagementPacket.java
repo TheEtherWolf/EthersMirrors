@@ -78,12 +78,13 @@ public class ServerboundOpenMirrorManagementPacket {
             }
 
             boolean warpTargetLocked = mirrorBE.getUpgradeData().getBoolean("WarpTargetLocked");
+            byte[] iconPixels = mirrorBE.getIconPixels();
             MirrorsNetwork.sendToPlayer(player, new ClientboundOpenMirrorManagementPacket(
                     mirrorId, mirrorBE.getOwnerUUID(), mirrorBE.getMirrorName(),
                     mirrorBE.getTier() != null ? mirrorBE.getTier().getName() : "unknown",
                     mirrorBE.getMirrorType() != null ? mirrorBE.getMirrorType().getName() : "unknown",
                     msg.masterPos, dimensionName, accessMode, allowList, blockList,
-                    mirrorBE.getAppliedUpgrades(), pocketCurrentSize, pocketMaxSize, warpTargetLocked
+                    mirrorBE.getAppliedUpgrades(), pocketCurrentSize, pocketMaxSize, warpTargetLocked, iconPixels
             ));
         });
         ctx.get().setPacketHandled(true);
