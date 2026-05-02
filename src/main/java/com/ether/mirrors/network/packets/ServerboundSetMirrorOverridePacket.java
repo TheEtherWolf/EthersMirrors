@@ -52,6 +52,11 @@ public class ServerboundSetMirrorOverridePacket {
                     return;
                 }
                 targetUUID = cached.get().getId();
+                if (targetUUID == null) {
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                            "Could not resolve UUID for \"" + msg.targetPlayerName + "\"."), true);
+                    return;
+                }
             }
 
             // Cannot override yourself

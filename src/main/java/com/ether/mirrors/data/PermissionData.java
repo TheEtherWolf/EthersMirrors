@@ -5,12 +5,15 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 public class PermissionData extends SavedData {
 
     private static final String DATA_NAME = "ethersmirrors_permissions";
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public enum PermissionLevel {
         USE("use"),
@@ -353,6 +356,7 @@ public class PermissionData extends SavedData {
                 String levelName = levelList.getCompound(j).getString("Level");
                 PermissionLevel level = PermissionLevel.fromName(levelName);
                 if (level != null) data.grantPermission(grantor, grantee, level);
+                else LOGGER.warn("[EthersMirrors] Unknown global permission level '{}' in save data — skipping", levelName);
             }
         }
 

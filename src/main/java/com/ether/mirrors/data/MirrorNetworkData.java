@@ -157,6 +157,7 @@ public class MirrorNetworkData extends SavedData {
      * Get all mirrors a player can access: their own + mirrors from players who have granted them permission.
      */
     public List<MirrorEntry> getConnectedMirrors(UUID playerUUID, PermissionData permissions) {
+        if (playerUUID == null) return Collections.emptyList();
         if (permissions == null) return getMirrorsForPlayer(playerUUID);
         List<MirrorEntry> result = new ArrayList<>(getMirrorsForPlayer(playerUUID));
 
