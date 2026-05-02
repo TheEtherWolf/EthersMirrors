@@ -305,8 +305,7 @@ public class MirrorSelectionScreen extends Screen {
                 String label = onCooldown ? String.format("%.1fs", cdMs / 1000.0) : "ENTER";
                 MirrorButton btn = MirrorButton.purple(btnX, btnY, ACT_W, ACT_H,
                         Component.literal(label), b -> {
-                            MirrorsNetwork.sendToServer(new ServerboundTeleportRequestPacket(
-                                    info.mirrorId, sourceMirrorPos, isHandheld));
+                            // Packet is sent at the END of the travel animation, not here.
                             minecraft.setScreen(new MirrorTravelScreen(info, sourceMirrorPos, isHandheld));
                         });
                 btn.active = info.inRange && !onCooldown;

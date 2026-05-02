@@ -1,7 +1,9 @@
 package com.ether.mirrors.screen;
 
 import com.ether.mirrors.compat.JourneyMapCompat;
+import com.ether.mirrors.network.MirrorsNetwork;
 import com.ether.mirrors.network.packets.ClientboundMirrorListPacket.MirrorInfo;
+import com.ether.mirrors.network.packets.ServerboundTeleportRequestPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,7 +13,8 @@ import net.minecraft.network.chat.Component;
 
 /**
  * Full-screen procedural travel animation shown during mirror teleportation.
- * The teleport packet is sent before this screen opens — the animation is purely cosmetic.
+ * The teleport packet is sent at tick 80 (end of animation) — player is held in place
+ * until the animation completes, then teleported.
  * Auto-closes after 80 ticks (~4 s at 20 TPS).
  *
  * Phases:
@@ -61,7 +64,12 @@ public class MirrorTravelScreen extends Screen {
     @Override
     public void tick() {
         ticks++;
-        if (ticks >= TOTAL_TICKS) onClose();
+        if (ticks >= TOTAL_TICKS) {
+            // Send the teleport request now that the animation has completed.
+            MirrorsNetwork.sendToServer(
+                    new ServerboundTeleportRequestPacket(destination.mirrorId, sourceMirrorPos, isHandheld));
+            onClose();
+        }
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -81,8 +89,8 @@ public class MirrorTravelScreen extends Screen {
     // ── Phase drawing ─────────────────────────────────────────────────────────
 
     private void drawBaseOverlay(GuiGraphics g, int sw, int sh, int phase) {
-        // Always-present dark base so game world is barely visible
-        g.fill(0, 0, sw, sh, 0xD8000008);
+        // Semi-transparent base — game world remains visible beneath the effect
+        g.fill(0, 0, sw, sh, 0xA0000008);
 
         switch (phase) {
             case 0 -> { // Charge — deepening purple vignette
@@ -90,9 +98,9 @@ public class MirrorTravelScreen extends Screen {
                 int alpha = (int)(t * 170);
                 g.fill(0, 0, sw, sh, (alpha << 24) | 0x1A0040);
             }
-            case 1 -> { // Dissolve — sine-shaped purple flash
+            case 1 -> { // Dissolve — subtle sine-shaped purple vignette
                 float t = phaseT(1, 19);
-                int alpha = (int)(Math.sin(t * Math.PI) * 210);
+                int alpha = (int)(Math.sin(t * Math.PI) * 100);
                 g.fill(0, 0, sw, sh, (alpha << 24) | 0x8833CC);
             }
             case 2 -> { // Tunnel — near-black deep space
@@ -125,23 +133,22 @@ public class MirrorTravelScreen extends Screen {
                     drawRing(g, cx, cy, r, (alpha << 24) | 0x7733CC);
                 }
             }
-            case 1 -> { // Dissolve — scanline shatter
+            case 1 -> { // Dissolve — sparse shimmer lines (toned down from scanline shatter)
                 float t = phaseT(1, 19);
-                for (int y = 0; y < sh; y += 3) {
-                    // Pseudo-random per scanline using line index + tick
+                for (int y = 0; y < sh; y += 18) {
                     long seed = (y * 31L + ticks * 7L) ^ 0xA5A5A5L;
-                    int lineAlpha = (int)(((seed & 0x3F) / 63f) * t * 90);
-                    g.fill(0, y, sw, y + 2, (lineAlpha << 24) | 0xEECCFF);
+                    int lineAlpha = (int)(((seed & 0x3F) / 63f) * t * 50);
+                    g.fill(0, y, sw, y + 1, (lineAlpha << 24) | 0xEECCFF);
                 }
             }
-            case 2 -> { // Tunnel — radial rushing lines
-                for (int i = 0; i < 24; i++) {
+            case 2 -> { // Tunnel — radial rushing lines (reduced count + shorter trails)
+                for (int i = 0; i < 10; i++) {
                     long seed  = i * 137L + ms / 60;
                     double ang = ((seed * 31L) % 360) * Math.PI / 180.0;
                     float frac = ((seed * 53L) % 1000) / 1000f;
                     float spd  = 0.012f + ((seed * 17L) % 60) / 4000f;
                     float pos  = (frac + (ms % 3000) * spd / 3000f) % 1f;
-                    float pos2 = Math.min(pos + 0.05f, 1f);
+                    float pos2 = Math.min(pos + 0.03f, 1f);
                     int x1 = cx + (int)(Math.cos(ang) * pos  * sw * 0.52);
                     int y1 = cy + (int)(Math.sin(ang) * pos  * sh * 0.52);
                     int x2 = cx + (int)(Math.cos(ang) * pos2 * sw * 0.52);
@@ -169,10 +176,10 @@ public class MirrorTravelScreen extends Screen {
                     }
                 }
             }
-            case 4 -> { // Arrival — single bright flash at start of phase
+            case 4 -> { // Arrival — soft flash at start of phase
                 float t = phaseT(4, 9);
                 if (t < 0.35f) {
-                    int flashA = (int)((0.35f - t) / 0.35f * 255);
+                    int flashA = (int)((0.35f - t) / 0.35f * 140);
                     g.fill(0, 0, sw, sh, (flashA << 24) | 0xFFFFFF);
                 }
             }

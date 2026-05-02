@@ -134,14 +134,20 @@ public class MirrorManagementScreen extends Screen {
                     }
                     if ("time_lock".equals(upgradeId)) {
                         // TIME_LOCK mode toggle buttons
-                        addRenderableWidget(MirrorButton.purple(pl + PANEL_W - 130, rowY + 7, 30, 14,
-                                Component.literal("Day"), b -> {
+                        MirrorButton dayBtn = MirrorButton.purple(pl + PANEL_W - 134, rowY + 7, 32, 14,
+                                Component.literal("\u2600 Day"), b -> {
                                     MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundTimeLockTogglePacket(mirrorPos, "day"));
-                                }));
-                        addRenderableWidget(MirrorButton.teal(pl + PANEL_W - 98, rowY + 7, 30, 14,
-                                Component.literal("Night"), b -> {
+                                });
+                        dayBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                Component.literal("Only allow teleport during daytime")));
+                        addRenderableWidget(dayBtn);
+                        MirrorButton nightBtn = MirrorButton.teal(pl + PANEL_W - 100, rowY + 7, 32, 14,
+                                Component.literal("\u263D Night"), b -> {
                                     MirrorsNetwork.sendToServer(new com.ether.mirrors.network.packets.ServerboundTimeLockTogglePacket(mirrorPos, "night"));
-                                }));
+                                });
+                        nightBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                Component.literal("Only allow teleport during nighttime")));
+                        addRenderableWidget(nightBtn);
                     }
                     if ("warp_target".equals(upgradeId)) {
                         // WARP_TARGET lock/unlock toggle
@@ -179,18 +185,21 @@ public class MirrorManagementScreen extends Screen {
                             }
                         }
                     }
-                    // Show a compact apply button for each available upgrade type (max 4 per row)
-                    int btnW = 76, btnGap = 2;
+                    // Show a compact install button for each available upgrade type (max 4 per row)
+                    int btnW = 80, btnGap = 2;
                     int bxStart = pl + 58;
                     for (int ai = 0; ai < Math.min(available.size(), 4); ai++) {
                         final com.ether.mirrors.item.MirrorUpgradeType ut = available.get(ai);
                         int bx2 = bxStart + ai * (btnW + btnGap);
-                        addRenderableWidget(MirrorButton.green(bx2, rowY + 7, btnW, 14,
-                                Component.literal(ut.getDisplayName()), b -> {
+                        MirrorButton installBtn = MirrorButton.green(bx2, rowY + 7, btnW, 14,
+                                Component.literal("\u2295 " + ut.getDisplayName()), b -> {
                                     MirrorsNetwork.sendToServer(new ServerboundApplyUpgradePacket(mirrorPos, ut.getId()));
                                     appliedUpgrades.add(ut.getId());
                                     rebuildWidgets();
-                                }));
+                                });
+                        installBtn.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                                Component.literal("Install: " + ut.getDescription())));
+                        addRenderableWidget(installBtn);
                     }
                 }
             }
@@ -436,12 +445,18 @@ public class MirrorManagementScreen extends Screen {
                     String name = type != null ? type.getDisplayName() : appliedUpgrades.get(i);
                     g.drawString(font, name, pl + 60, rowY + 10, UITheme.TEXT_OWN, false);
                 } else {
-                    g.drawString(font, "— Empty —", pl + 60, rowY + 10, UITheme.TEXT_MUTED, false);
+                    // Count how many install buttons are visible for this slot
+                    var _pl2 = net.minecraft.client.Minecraft.getInstance().player;
+                    boolean hasItems = _pl2 != null && _pl2.getInventory().items.stream()
+                            .anyMatch(s -> s.getItem() instanceof com.ether.mirrors.item.MirrorUpgradeItem ui2
+                                    && !appliedUpgrades.contains(ui2.getUpgradeType().getId()));
+                    String emptyLabel = hasItems ? "— pick an upgrade \u2192" : "— Empty (carry upgrade items to install) —";
+                    g.drawString(font, emptyLabel, pl + 60, rowY + 10, UITheme.withAlpha(UITheme.TEXT_MUTED, 0xAA), false);
                 }
             }
             if (appliedUpgrades.size() < upgradeSlots) {
-                g.drawCenteredString(font, "Upgrade items in your inventory appear as buttons above",
-                        pl + PANEL_W / 2, sy + upgradeSlots * 30 + 8, UITheme.withAlpha(UITheme.TEXT_MUTED, 0xAA));
+                g.drawCenteredString(font, "\u2295 = install  \u00D7 = remove",
+                        pl + PANEL_W / 2, sy + upgradeSlots * 30 + 8, UITheme.withAlpha(UITheme.TEXT_MUTED, 0x88));
             }
         }
 

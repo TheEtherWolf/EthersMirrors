@@ -48,21 +48,24 @@ public class MirrorPlacementScreen extends Screen {
     private static final String[] PRIV_ICONS  = { "🔒", "◉", "☎", "➤" };
 
     // ── Layout ────────────────────────────────────────────────────────────────
-    private static final int PANEL_W   = 520;
-    private static final int HEADER_H  = 32;
-    private static final int META_H    = 22;
-    private static final int SEC_PAD_X = 16;
-    private static final int SEC_PAD_Y = 14;
-    private static final int INPUT_H   = 28;
-    private static final int GLYPH_COLS = 6;
-    private static final int GLYPH_SIZE = (PANEL_W - SEC_PAD_X * 2 - 5 * 6) / GLYPH_COLS; // ~74
-    private static final int PRIV_H    = 30;
-    private static final int SWATCH_SZ = (PANEL_W - SEC_PAD_X * 2 - 15 * 4) / 16; // ~26
-    private static final int DESC_H    = 48;
-    private static final int TOGGLE_H  = 32;
-    private static final int PREVIEW_H = 76;
-    private static final int FOOTER_H  = 38;
-    private static final int LABEL_H   = 20;
+    private static final int PANEL_W    = 360;
+    private static final int HEADER_H   = 28;
+    private static final int META_H     = 18;
+    private static final int SEC_PAD_X  = 14;
+    private static final int SEC_PAD_Y  = 8;
+    private static final int LABEL_H    = 16;
+    private static final int INPUT_H    = 22;
+    private static final int GLYPH_COLS = 12;   // all 12 sigils in one row
+    private static final int GLYPH_GAP  = 4;
+    private static final int GLYPH_SIZE = (PANEL_W - SEC_PAD_X * 2 - (GLYPH_COLS - 1) * GLYPH_GAP) / GLYPH_COLS; // 24
+    private static final int PRIV_H     = 26;
+    private static final int PRIV_GAP   = 3;
+    private static final int SWATCH_GAP = 2;
+    private static final int SWATCH_SZ  = (PANEL_W - SEC_PAD_X * 2 - 15 * SWATCH_GAP) / 16; // ~18
+    private static final int DESC_H     = 40;
+    private static final int TOGGLE_H   = 24;
+    private static final int PREVIEW_H  = 44;
+    private static final int FOOTER_H   = 30;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private final BlockPos mirrorPos;
@@ -106,22 +109,14 @@ public class MirrorPlacementScreen extends Screen {
 
     private int computeTotalH() {
         int h = HEADER_H + META_H;
-        // Section 1: name
-        h += SEC_PAD_Y + LABEL_H + INPUT_H + SEC_PAD_Y;
-        // Section 2: sigil
-        int glyphRows = (SIGILS.length + GLYPH_COLS - 1) / GLYPH_COLS;
-        h += SEC_PAD_Y + LABEL_H + glyphRows * GLYPH_SIZE + (glyphRows - 1) * 6 + SEC_PAD_Y;
-        // Section 3: privacy
-        h += SEC_PAD_Y + LABEL_H + PRIV_H + SEC_PAD_Y;
-        // Section 4: tint
-        h += SEC_PAD_Y + LABEL_H + SWATCH_SZ + SEC_PAD_Y;
-        // Section 5: description
-        h += SEC_PAD_Y + LABEL_H + DESC_H + SEC_PAD_Y;
-        // Section 6: pocket toggle (pocket only)
+        h += SEC_PAD_Y + LABEL_H + INPUT_H  + SEC_PAD_Y; // name
+        h += SEC_PAD_Y + LABEL_H + GLYPH_SIZE + SEC_PAD_Y; // sigil (1 row)
+        h += SEC_PAD_Y + LABEL_H + PRIV_H   + SEC_PAD_Y; // privacy
+        h += SEC_PAD_Y + LABEL_H + SWATCH_SZ + SEC_PAD_Y; // tint
+        h += SEC_PAD_Y + LABEL_H + DESC_H   + SEC_PAD_Y; // description
         if ("pocket".equals(mirrorType)) {
             h += SEC_PAD_Y + LABEL_H + TOGGLE_H + SEC_PAD_Y;
         }
-        // Preview + footer
         h += PREVIEW_H + FOOTER_H;
         return h;
     }
@@ -241,27 +236,21 @@ public class MirrorPlacementScreen extends Screen {
         top += LABEL_H;
 
         int gx = pl + SEC_PAD_X;
-        int cellW = (PANEL_W - SEC_PAD_X * 2 - (GLYPH_COLS - 1) * 6) / GLYPH_COLS;
-        int cellH = cellW;
         for (int i = 0; i < SIGILS.length; i++) {
-            int col = i % GLYPH_COLS;
-            int row = i / GLYPH_COLS;
-            int cx = gx + col * (cellW + 6);
-            int cy = top + row * (cellH + 6);
+            int cx  = gx + i * (GLYPH_SIZE + GLYPH_GAP);
             boolean sel = i == sigilIndex;
             int bg  = sel ? 0x26D4AF37 : 0x66000000;
             int bor = sel ? DC_GOLD : DC_BORDER_DIM;
-            g.fill(cx, cy, cx + cellW, cy + cellH, bg);
-            hLine(g, cx, cx + cellW - 1, cy,           bor);
-            hLine(g, cx, cx + cellW - 1, cy + cellH - 1, bor);
-            vLine(g, cx,          cy, cy + cellH - 1, bor);
-            vLine(g, cx + cellW - 1, cy, cy + cellH - 1, bor);
+            g.fill(cx, top, cx + GLYPH_SIZE, top + GLYPH_SIZE, bg);
+            hLine(g, cx, cx + GLYPH_SIZE - 1, top,                bor);
+            hLine(g, cx, cx + GLYPH_SIZE - 1, top + GLYPH_SIZE - 1, bor);
+            vLine(g, cx,               top, top + GLYPH_SIZE - 1, bor);
+            vLine(g, cx + GLYPH_SIZE - 1, top, top + GLYPH_SIZE - 1, bor);
             int tc = sel ? DC_GOLD : DC_MUTED;
             int sw = font.width(SIGILS[i]);
-            g.drawString(font, SIGILS[i], cx + (cellW - sw) / 2, cy + (cellH - 8) / 2, tc, false);
+            g.drawString(font, SIGILS[i], cx + (GLYPH_SIZE - sw) / 2, top + (GLYPH_SIZE - 8) / 2, tc, false);
         }
-        int rows = (SIGILS.length + GLYPH_COLS - 1) / GLYPH_COLS;
-        top += rows * cellH + (rows - 1) * 6;
+        top += GLYPH_SIZE;
         return sectionEnd(g, top);
     }
 
@@ -272,10 +261,10 @@ public class MirrorPlacementScreen extends Screen {
         drawLabel(g, pl + SEC_PAD_X, top, "Default Access", "For unlisted players", false);
         top += LABEL_H;
 
-        int pw = (PANEL_W - SEC_PAD_X * 2 - 3 * 4) / 4;
+        int pw = (PANEL_W - SEC_PAD_X * 2 - 3 * PRIV_GAP) / 4;
         int px = pl + SEC_PAD_X;
         for (int i = 0; i < 4; i++) {
-            int x = px + i * (pw + 4);
+            int x = px + i * (pw + PRIV_GAP);
             boolean sel = i == privacyLevel;
             int bg  = sel ? (PRIV_BG[i]  | 0xFF000000) : 0x00000000;
             int bor = sel ? PRIV_BR[i] : DC_BORDER_DIM;
@@ -300,10 +289,10 @@ public class MirrorPlacementScreen extends Screen {
         drawLabel(g, pl + SEC_PAD_X, top, "Tint", "Frame color", false);
         top += LABEL_H;
 
-        int sw = (PANEL_W - SEC_PAD_X * 2 - 15 * 4) / 16;
+        int sw = SWATCH_SZ;
         int sx = pl + SEC_PAD_X;
         for (int i = 0; i < 16; i++) {
-            int x = sx + i * (sw + 4);
+            int x = sx + i * (sw + SWATCH_GAP);
             boolean sel = i == dyeColorIndex;
             g.fill(x, top, x + sw, top + sw, DYE_COLORS[i]);
             int bor = sel ? DC_GOLD : (DYE_COLORS[i] & 0x00FFFFFF) | 0x66000000;
@@ -406,26 +395,25 @@ public class MirrorPlacementScreen extends Screen {
         hLine(g, pl, pl + PANEL_W - 1, top,              DC_BORDER_DIM);
         hLine(g, pl, pl + PANEL_W - 1, top + PREVIEW_H - 1, DC_BORDER_DIM);
 
-        // Glyph box 56×56
+        // Glyph box 36×36
         int glyphColor = dyeColorIndex >= 0 ? DYE_COLORS[dyeColorIndex] : DC_GOLD;
-        int gx = pl + 16, gy = top + (PREVIEW_H - 56) / 2;
-        g.fill(gx, gy, gx + 56, gy + 56, 0x66000000);
-        hLine(g, gx, gx + 55, gy,      glyphColor & 0x66FFFFFF | 0x66000000);
-        hLine(g, gx, gx + 55, gy + 55, glyphColor & 0x66FFFFFF | 0x66000000);
-        vLine(g, gx,      gy, gy + 55, glyphColor & 0x66FFFFFF | 0x66000000);
-        vLine(g, gx + 55, gy, gy + 55, glyphColor & 0x66FFFFFF | 0x66000000);
+        int gx = pl + 12, gy = top + (PREVIEW_H - 36) / 2;
+        g.fill(gx, gy, gx + 36, gy + 36, 0x66000000);
+        hLine(g, gx, gx + 35, gy,      glyphColor & 0x66FFFFFF | 0x66000000);
+        hLine(g, gx, gx + 35, gy + 35, glyphColor & 0x66FFFFFF | 0x66000000);
+        vLine(g, gx,      gy, gy + 35, glyphColor & 0x66FFFFFF | 0x66000000);
+        vLine(g, gx + 35, gy, gy + 35, glyphColor & 0x66FFFFFF | 0x66000000);
         String sig = SIGILS[sigilIndex];
         int sigW = font.width(sig);
-        // Draw sigil larger by scaling — approximate with drawString (no scaling in 1.20.1 easy API)
-        g.drawString(font, sig, gx + (56 - sigW) / 2, gy + 24, glyphColor, false);
+        g.drawString(font, sig, gx + (36 - sigW) / 2, gy + 14, glyphColor, false);
 
         // Name + meta text
-        int textX = gx + 56 + 14;
+        int textX = gx + 36 + 10;
         int nameColor = dyeColorIndex >= 0 ? DYE_COLORS[dyeColorIndex] : DC_GOLD;
-        g.drawString(font, name.isEmpty() ? "—" : name.toUpperCase(), textX, top + 18, nameColor, false);
+        g.drawString(font, name.isEmpty() ? "—" : name.toUpperCase(), textX, top + 10, nameColor, false);
 
         // Access pill
-        int metaY = top + 34;
+        int metaY = top + 24;
         int px2 = textX;
         String privLabel = PRIV_LABELS[privacyLevel];
         int pillW = font.width(privLabel) + 10;
@@ -460,9 +448,7 @@ public class MirrorPlacementScreen extends Screen {
         hLine(g, pl, pl + PANEL_W - 1, top, DC_BORDER_DIM);
 
         // Cost text (left)
-        String cost = "pocket".equals(mirrorType)
-                ? "Activation cost  1 \u2736 Lapis + 4 \u2736 Ender Pearl"
-                : "Activation cost  1 \u2736 Lapis";
+        String cost = "pocket".equals(mirrorType) ? "1 Lapis + 4 Pearls" : "1 Lapis";
         g.drawString(font, cost, pl + 14, top + (FOOTER_H - 8) / 2, DC_MUTED, false);
 
         // CANCEL button
@@ -545,20 +531,14 @@ public class MirrorPlacementScreen extends Screen {
         }
         cur = nameBot + SEC_PAD_Y;
 
-        // Sigil grid clicks
+        // Sigil strip clicks (single row)
         int sigilTop = cur + SEC_PAD_Y + LABEL_H;
-        int cellW = (PANEL_W - SEC_PAD_X * 2 - (GLYPH_COLS - 1) * 6) / GLYPH_COLS;
-        int cellH = cellW;
-        int rows = (SIGILS.length + GLYPH_COLS - 1) / GLYPH_COLS;
-        int sigilBot = sigilTop + rows * cellH + (rows - 1) * 6;
+        int sigilBot = sigilTop + GLYPH_SIZE;
         if (my >= sigilTop && my <= sigilBot) {
             int gx = pl + SEC_PAD_X;
             for (int i = 0; i < SIGILS.length; i++) {
-                int col = i % GLYPH_COLS;
-                int row = i / GLYPH_COLS;
-                int cx = gx + col * (cellW + 6);
-                int cy = sigilTop + row * (cellH + 6);
-                if (mx >= cx && mx <= cx + cellW && my >= cy && my <= cy + cellH) {
+                int cx = gx + i * (GLYPH_SIZE + GLYPH_GAP);
+                if (mx >= cx && mx <= cx + GLYPH_SIZE) {
                     sigilIndex = i;
                     nameActive = false; descActive = false;
                     return true;
@@ -571,10 +551,10 @@ public class MirrorPlacementScreen extends Screen {
         int privTop = cur + SEC_PAD_Y + LABEL_H;
         int privBot = privTop + PRIV_H;
         if (my >= privTop && my <= privBot) {
-            int pw = (PANEL_W - SEC_PAD_X * 2 - 3 * 4) / 4;
+            int pw = (PANEL_W - SEC_PAD_X * 2 - 3 * PRIV_GAP) / 4;
             int px = pl + SEC_PAD_X;
             for (int i = 0; i < 4; i++) {
-                int x = px + i * (pw + 4);
+                int x = px + i * (pw + PRIV_GAP);
                 if (mx >= x && mx <= x + pw) {
                     privacyLevel = i;
                     nameActive = false; descActive = false;
@@ -586,14 +566,13 @@ public class MirrorPlacementScreen extends Screen {
 
         // Tint swatches
         int tintTop = cur + SEC_PAD_Y + LABEL_H;
-        int sw = (PANEL_W - SEC_PAD_X * 2 - 15 * 4) / 16;
-        int tintBot = tintTop + sw;
+        int tintBot = tintTop + SWATCH_SZ;
         if (my >= tintTop && my <= tintBot) {
             int sx = pl + SEC_PAD_X;
             for (int i = 0; i < 16; i++) {
-                int x = sx + i * (sw + 4);
-                if (mx >= x && mx <= x + sw) {
-                    dyeColorIndex = (dyeColorIndex == i) ? -1 : i; // toggle off on re-click
+                int x = sx + i * (SWATCH_SZ + SWATCH_GAP);
+                if (mx >= x && mx <= x + SWATCH_SZ) {
+                    dyeColorIndex = (dyeColorIndex == i) ? -1 : i;
                     nameActive = false; descActive = false;
                     return true;
                 }
